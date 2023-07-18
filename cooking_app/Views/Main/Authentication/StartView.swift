@@ -55,7 +55,8 @@ struct StartView: View {
                 
                 Spacer()
                 
-            }.background(Color(hex: 0xF2F2F7))
+            }
+            .background(Color(hex: 0xF2F2F7))
         }
     }
 }

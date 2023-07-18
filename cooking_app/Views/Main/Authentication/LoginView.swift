@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct LoginView: View {
+    
+    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
+    
     @State private var email = ""
     @State private var password = ""
     
@@ -94,8 +97,12 @@ struct LoginView: View {
             
                 Spacer()
                 
-            }.background(Color(hex: 0xF2F2F7))
+            }
+            .background(Color(hex: 0xF2F2F7))
         }
+        .navigationBarTitle("")
+        .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true)
     }
 }
 

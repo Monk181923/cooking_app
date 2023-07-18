@@ -8,76 +8,118 @@
 import SwiftUI
 
 struct RegistrationView: View {
+    
+    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
+    
     @State private var email = ""
-    @State private var fullName = ""
+    @State private var firstName = ""
     @State private var password = ""
     @State private var confirmPassword = ""
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        VStack {
-            // image
-            Image("logo")
-                .resizable()
-                .scaledToFill()
-                .frame(width: 100, height: 120)
-                .padding(.vertical, 32)
+        
+        NavigationStack {
             
-            VStack(spacing: 24) {
-                InputView(text:$email,
-                          title: "Email Adresse",
-                          placeholder: "name@example.com")
-                .autocapitalization(.none)
+            VStack (spacing: 15) {
                 
-                InputView(text:$fullName,
-                          title: "Vorname",
-                          placeholder: "Mustername")
+                Spacer()
                 
-                InputView(text: $password,
-                          title: "Password",
-                          placeholder: "Enter your password",
-                          isSecureField: true)
+                Image("logo")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 100, height: 120)
+                    .padding(.vertical, 32)
                 
-                InputView(text: $confirmPassword,
-                          title: "Password bestätigen",
-                          placeholder: "Passwort bestätigen",
-                          isSecureField: true)
-                
-                
-            }
-            .padding(.horizontal)
-            .padding(.top, 12)
-            
-            Button {
-                print("Benutzer Registrieren..")
-            } label: {
-                HStack {
-                    Text("Registrieren")
-                        .fontWeight(.semibold)
-                    Image(systemName: "arrow.right")
+                VStack (spacing: 86) {
+                    VStack (spacing: 15) {
+                        
+                        TextField("E-Mail",
+                                  text: $email,
+                                  prompt: Text("E-Mail")
+                            .foregroundColor(Color(hex: 0x9C9C9C))
+                            .font(.custom("Ubuntu-Regular",fixedSize: 20)))
+                        .frame(maxHeight: 38)
+                        .padding(10)
+                        .background(Color(hex: 0xFAFAFA))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color(hex: 0xC5C5C5), lineWidth: 2)
+                        }
+                        .padding(.horizontal)
+                        
+                        TextField("Vorname",
+                                  text: $firstName,
+                                  prompt: Text("Vorname")
+                            .foregroundColor(Color(hex: 0x9C9C9C))
+                            .font(.custom("Ubuntu-Regular",fixedSize: 20)))
+                        .frame(maxHeight: 38)
+                        .padding(10)
+                        .background(Color(hex: 0xFAFAFA))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color(hex: 0xC5C5C5), lineWidth: 2)
+                        }
+                        .padding(.horizontal)
+                        
+                        TextField("Passwort",
+                                  text: $password,
+                                  prompt: Text("Passwort")
+                            .foregroundColor(Color(hex: 0x9C9C9C))
+                            .font(.custom("Ubuntu-Regular",fixedSize: 20)))
+                        .frame(maxHeight: 38)
+                        .padding(10)
+                        .background(Color(hex: 0xFAFAFA))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color(hex: 0xC5C5C5), lineWidth: 2)
+                        }
+                        .padding(.horizontal)
+                        
+                        TextField("Passwort bestätigen",
+                                  text: $confirmPassword,
+                                  prompt: Text("Passwort bestätigen")
+                            .foregroundColor(Color(hex: 0x9C9C9C))
+                            .font(.custom("Ubuntu-Regular",fixedSize: 20)))
+                        .frame(maxHeight: 38)
+                        .padding(10)
+                        .background(Color(hex: 0xFAFAFA))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color(hex: 0xC5C5C5), lineWidth: 2)
+                        }
+                        .padding(.horizontal)
+                    }
+                    
+                    Button {
+                        print("Button pressed")
+                    } label: {
+                        Text("Registrieren")
+                            .font(.custom("Ubuntu-Bold", size: 20))
+                            .foregroundColor(Color(hex: 0xFFFFFF))
+                            .frame(maxWidth: .infinity, maxHeight: 54)
+                    }
+                    .background(Color(hex: 0x007C38))
+                    .cornerRadius(14)
+                    .shadow(radius: 4, x: 0, y: 5)
+                    .padding(.horizontal)
                 }
-                .foregroundColor(.white)
-                .frame(width: UIScreen.main.bounds.width - 32, height: 48)
-            }
-            .background(Color(.systemGreen))
-            .cornerRadius(10)
-            .padding(.top, 24)
-            
-            Spacer()
-            
-            Button {
-                dismiss()
-            } label: {
-                HStack(spacing: 3) {
-                    Text("Ich habe bereits einen Account?")
-                        .foregroundColor(.gray)
-                    Text("Anmelden")
-                        .fontWeight(.bold)
-                        .foregroundColor(.gray)
+                
+                NavigationLink (destination: LoginView()) {
+                    Text("Ich habe bereits einen Account!")
+                        .font(.custom("Ubuntu", size: 16))
+                        .foregroundColor(Color(hex: 0x757575))
+                        .underline()
                 }
-                .font(.system(size:14))
+            
+                Spacer()
+                
             }
+            .background(Color(hex: 0xF2F2F7))
         }
+        .navigationBarTitle("")
+        .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true)
     }
 }
 
