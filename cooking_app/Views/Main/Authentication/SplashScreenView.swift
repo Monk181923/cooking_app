@@ -17,32 +17,34 @@ struct SplashScreenView: View {
             ContentView()
         } else {
 
-        
-        VStack {
-            VStack {
-                Image("logo")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 100, height: 120)
-                    .padding(.vertical, 32)
-            }
-            .scaleEffect(size)
-            .opacity(opacity)
-            .onAppear {
-                withAnimation(.easeIn(duration: 1.2)) {
-                    self.size = 0.9
-                    self.opacity = 1.0
+            ZStack {
+                VStack {
+                    VStack {
+                        Image("logo")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 100, height: 120)
+                            .padding(.vertical, 32)
+                    }
+                    .scaleEffect(size)
+                    .opacity(opacity)
+                    .onAppear {
+                        withAnimation(.easeIn(duration: 1.2)) {
+                            self.size = 0.9
+                            self.opacity = 1.0
+                        }
+                    }
+                }
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        self.isActive = true
+                    }
                 }
             }
-        }
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                self.isActive = true
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(hex: 0xF2F2F7))
         }
     }
-    
-}
 }
 
 struct SplashScreenView_Previews: PreviewProvider {

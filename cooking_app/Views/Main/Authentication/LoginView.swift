@@ -3,84 +3,98 @@
 //  cooking_app
 //
 //  Created by vislab-rechner-1212700 on 28.06.23.
-// hallo :D
+//
 
 import SwiftUI
 
 struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
+    
     var body: some View {
+        
         NavigationStack {
-            VStack {
-                // image
+            
+            VStack (spacing: 42) {
+                Spacer()
+                
+                // Logo Image
                 Image("logo")
                     .resizable()
                     .scaledToFill()
                     .frame(width: 100, height: 120)
                     .padding(.vertical, 32)
                 
-                // form fields
-                VStack(spacing: 24) {
-                    InputView(text:$email,
-                              title: "Email Adresse",
-                              placeholder: "name@example.com")
-                    .autocapitalization(.none)
-                    
-                    InputView(text: $password,
-                              title: "Password",
-                              placeholder: "Enter your password",
-                              isSecureField: true)
-                    
-                    NavigationLink {
-                        
-                    } label: {
-                        HStack {
-                            Text("Passwort vergessen?")
-                                .fontWeight(.bold)
-                                .foregroundColor(.gray)
+                VStack (spacing: 62) {
+                    VStack (spacing: 12){
+                        VStack (spacing: 15) {
+                            
+                            TextField("E-Mail",
+                                      text: $email,
+                                      prompt: Text("E-Mail")
+                                .foregroundColor(Color(hex: 0x9C9C9C))
+                                .font(.custom("Ubuntu-Regular",fixedSize: 20)))
+                            .frame(maxHeight: 38)
+                            .padding(10)
+                            .background(Color(hex: 0xFAFAFA))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color(hex: 0xC5C5C5), lineWidth: 2)
+                            }
+                            .padding(.horizontal)
+                            
+                            TextField("Passwort",
+                                      text: $email,
+                                      prompt: Text("Passwort")
+                                .foregroundColor(Color(hex: 0x9C9C9C))
+                                .font(.custom("Ubuntu-Bold",fixedSize: 20)))
+                            .frame(maxHeight: 38)
+                            .padding(10)
+                            .background(Color(hex: 0xFAFAFA))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color(hex: 0xC5C5C5), lineWidth: 2)
+                            }
+                            .padding(.horizontal)
                         }
-                        .font(.system(size:14))
+                        
+                        NavigationLink (destination: SplashScreenView()) {
+                            Text("Passwort vergessen?")
+                                .font(.custom("Ubuntu",fixedSize: 16))
+                                .foregroundColor(Color(hex: 0x767676))
+                                .underline()
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .padding(.horizontal)
+                        }
                     }
                     
-                    
-                }
-                .padding(.horizontal)
-                .padding(.top, 12)
-                
-                // sign in button
-                Button {
-                    print("log user in..")
-                } label: {
-                    HStack {
-                        Text("Anmelden")
-                            .fontWeight(.semibold)
-                        Image(systemName: "arrow.right")
+                    VStack (spacing: 15) {
+                        
+                        Button {
+                            print("Button pressed")
+                        } label: {
+                            Text("Anmelden")
+                                .font(.custom("Ubuntu-Bold", size: 20))
+                                .foregroundColor(Color(hex: 0xFFFFFF))
+                                .frame(maxWidth: .infinity, maxHeight: 54)
+                        }
+                        .background(Color(hex: 0x007C38))
+                        .cornerRadius(14)
+                        .shadow(radius: 4, x: 0, y: 5)
+                        .padding(.horizontal)
+                        
+                        NavigationLink (destination: RegistrationView()) {
+                            Text("Ich habe noch keinen Account!")
+                                .font(.custom("Ubuntu", size: 16))
+                                .foregroundColor(Color(hex: 0x757575))
+                                .underline()
+                        }
                     }
-                    .foregroundColor(.white)
-                    .frame(width: UIScreen.main.bounds.width - 32, height: 48)
                 }
-                .background(Color(.systemGreen))
-                .cornerRadius(10)
-                .padding(.top, 24)
-                
+            
                 Spacer()
                 
-                // sign up button
-                NavigationLink {
-                    RegistrationView()
-                        .navigationBarBackButtonHidden(true)
-                } label: {
-                    HStack(spacing: 3) {
-                        Text("Ich habe noch keinen Account?")
-                            .foregroundColor(.gray)
-                        Text("Registrieren")
-                            .fontWeight(.bold)
-                            .foregroundColor(.gray)
-                    }
-                    .font(.system(size:14))
-                }
-            }
+            }.background(Color(hex: 0xF2F2F7))
         }
     }
 }
