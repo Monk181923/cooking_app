@@ -6,16 +6,19 @@
 //
 
 import SwiftUI
+import Alamofire
 import Foundation
 
 struct RegistrationView: View {
     
+    let URL_USER_REGISTER = "http://cookbuddy.marcelruhstorfer.de/register.php"
+    
     @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
     
-    @State private var email = ""
-    @State private var firstName = ""
-    @State private var password = ""
-    @State private var confirmPassword = ""
+    @State private var email: String = ""
+    @State private var firstName: String = ""
+    @State private var password: String = ""
+    @State private var confirmPassword: String = ""
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -93,7 +96,35 @@ struct RegistrationView: View {
                     }
                     
                     Button {
-                        print("Button pressed")
+                        if ((password == confirmPassword) && (password != "")) {
+                            let _parameters: Parameters=[
+                                "user_email":email,
+                                "user_name":firstName,
+                                "password":password,
+                            ]
+                            
+                            Alamofire.request(URL_USER_REGISTER, method: .post, parameters: _parameters).responseJSON {
+                                response in
+                                print(response)
+                                
+                                if let result = response.result.value {
+                                    let jsonData = result as! NSDictionary
+                                    
+                                    if ((jsonData.value(forKey: "message") as! String) == "User created successfully")
+                                    {
+                                        print("User wurde erfolgreich registriert!")
+                                    }
+                                }
+                            }
+                            
+                            
+                            
+                            
+                            
+                        } else{
+                            print("Beide Passwörter müssen gleich sein!")
+                        }
+                        
                     } label: {
                         Text("Registrieren")
                             .font(.custom("Ubuntu-Bold", size: 20))
