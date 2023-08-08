@@ -16,6 +16,9 @@ struct HomeView: View {
             .navigationTitle("Meine Rezepte")
         }
         .navigationViewStyle(.stack)
+        .navigationBarTitle("")
+        .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true)
     }
 }
 
