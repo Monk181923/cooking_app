@@ -19,7 +19,7 @@ struct LoginView: View {
     
     @State private var email = ""
     @State private var password = ""
-    @State private var login: Bool = false
+    @State private var confirmLogin: Bool = false
     
     var body: some View {
         
@@ -93,6 +93,12 @@ struct LoginView: View {
                                     .font(.custom("Ubuntu-Bold", size: 17))
                                     .foregroundColor(Color(hex: 0xFFFFFF))
                                     .frame(maxWidth: .infinity, maxHeight: 54)
+                                    .navigationDestination(
+                                         isPresented: $confirmLogin) {
+                                             HomeView()
+                                             Text("")
+                                                  .hidden()
+                                         }
                             }
                             .background(Color(hex: 0x007C38))
                             .cornerRadius(14)
@@ -176,6 +182,7 @@ struct LoginView: View {
                                     
                                     //switching the screen
                                     print(defaultValues)
+                                    confirmLogin = true
                                     
                                 } else {
                                     //error message in case of invalid credential
