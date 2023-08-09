@@ -20,9 +20,6 @@ struct ProfileView: View {
             
             Section("Allgemein") {
                 HStack {
-                    SettingsRowView(imageName: "gear",
-                                    title: "Version",
-                                    tintColor: Color(.systemGray))
                     
                     Spacer()
                     
@@ -30,22 +27,6 @@ struct ProfileView: View {
                         .font(.subheadline)
                         .foregroundColor(.gray)
                     
-                }
-            }
-            
-            Section("Account") {
-                Button {
-                    print("Ausloggen..")
-                } label: {
-                    SettingsRowView(imageName: "arrow.left.circle.fill",              title: "Ausloggen",
-                                    tintColor: .red)
-                }
-                
-                Button {
-                    print("Account löschen..")
-                } label: {
-                    SettingsRowView(imageName: "xmark.circle.fill",              title: "Account löschen",
-                                    tintColor: .red)
                 }
             }
         }

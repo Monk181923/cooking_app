@@ -14,9 +14,12 @@ struct ContentView: View {
 //                .ignoresSafeArea()
             
 //        }
-        ////TabBarView()
-        StartView()
-        
+        //TabBarView()
+        if (UserDefaults.standard.string(forKey: "password") == "") {
+            StartView()
+        } else {
+            LoginView()
+        }
     }
 }
 

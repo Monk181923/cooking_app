@@ -25,7 +25,7 @@ struct StartView: View {
                 
                 VStack (spacing: 24) {
                     
-                    NavigationLink (destination: RegistrationView()) {
+                    NavigationLink(destination: RegistrationView()) {
                         
                         Text("Jetzt registrieren")
                             .font(.custom("Ubuntu-Bold", size: 20))
@@ -50,13 +50,11 @@ struct StartView: View {
                             .stroke(Color(hex: 0xC5C5C5), lineWidth: 2)
                     }
                     .padding(.horizontal)
-                        
-                    }
-                
+                }
                 Spacer()
-                
             }
             .background(Color(hex: 0xF2F2F7))
+            .navigationBarBackButtonHidden(true)
         }
     }
 }

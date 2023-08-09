@@ -9,38 +9,37 @@ import SwiftUI
 
 struct TabBarView: View {
     var body: some View {
-        TabView {
-            HomeView()
-                .tabItem {
-                    Label("Home", systemImage: "house")
-                }
-            SearchView()
-                .tabItem {
-                    Label("Search", systemImage: "magnifyingglass")
-                }
-            
-            CategoriesView()
-                .tabItem {
-                    Label("Categories", systemImage: "rectangle.grid.1x2")
-                }
-            
-            NewRecipeView()
-                .tabItem {
-                    Label("New", systemImage: "plus")
-                }
-            
-            FavoritesView()
-                .tabItem {
-                    Label("Favorites", systemImage: "heart")
-                }
-            
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
-        }
-    }
-}
+            TabView {
+                    HomeView()
+                        .tabItem {
+                            Label("Dashboard", systemImage: "house")
+                        }
+                    
+                    SearchView()
+                        .tabItem {
+                            Label("Suche", systemImage: "magnifyingglass")
+                        }
+                    
+                    NewRecipeView()
+                        .tabItem {
+                            Label("", systemImage: "plus")
+                        }
+                    
+                    FavoritesView()
+                        .tabItem {
+                            Label("Kochbuch", systemImage: "bookmark")
+                        }
+                    
+                    SettingsView()
+                        .tabItem {
+                            Label("Profil", systemImage: "person")
+                        }
+            }
+            .navigationBarTitle("")
+            .navigationBarBackButtonHidden(true)
+            .navigationBarHidden(true)
+    } // Ende body
+} // Ende TabBarView
 
 struct TabBarView_Previews: PreviewProvider {
     static var previews: some View {

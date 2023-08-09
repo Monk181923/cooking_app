@@ -13,13 +13,13 @@ struct LoginView: View {
     let URL_USER_LOGIN = "http://cookbuddy.marcelruhstorfer.de/login.php"
     let defaultValues = UserDefaults.standard
     
-    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
-    
     @State var show = false
+    @State var attempts: Int = 0
+    @State var wrongPassword: Bool = false
     
     @State private var email = ""
     @State private var password = ""
-    @State private var login: Bool = false
+    @State private var confirmLogin: Bool = false
     
     var body: some View {
         
@@ -35,6 +35,9 @@ struct LoginView: View {
                         .scaledToFill()
                         .frame(width: 100, height: 120)
                         .padding(.vertical, 32)
+                        .onAppear(perform: {
+                            existensLogin()
+                        })
                     
                     VStack (spacing: 62) {
                         VStack (spacing: 12){
@@ -45,6 +48,8 @@ struct LoginView: View {
                                           prompt: Text("E-Mail")
                                     .foregroundColor(Color(hex: 0x9C9C9C))
                                     .font(.custom("Ubuntu-Regular",fixedSize: 17)))
+                                .keyboardType(.emailAddress)
+                                .autocapitalization(.none)
                                 .frame(maxHeight: 38)
                                 .padding(10)
                                 .background(Color(hex: 0xFAFAFA))
@@ -54,19 +59,28 @@ struct LoginView: View {
                                 }
                                 .padding(.horizontal, 25)
                                 
-                                TextField("Passwort",
+                                SecureField("Passwort",
                                           text: $password,
                                           prompt: Text("Passwort")
                                     .foregroundColor(Color(hex: 0x9C9C9C))
                                     .font(.custom("Ubuntu-Bold",fixedSize: 17)))
+                                .textContentType(.password)
+                                .autocapitalization(.none)
                                 .frame(maxHeight: 38)
                                 .padding(10)
                                 .background(Color(hex: 0xFAFAFA))
                                 .overlay {
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color(hex: 0xC5C5C5), lineWidth: 2)
+                                        .stroke(wrongPassword ? Color(hex: 0xB91919) : Color(hex: 0xC5C5C5), lineWidth: 2)
                                 }
                                 .padding(.horizontal, 25)
+                                .onChange(of: password) { newValue in
+                                    if !newValue.isEmpty {
+                                        wrongPassword = false
+                                    }
+                                }
+                                .modifier(Shake(animatableData: CGFloat(attempts)))
+
                             }
                             
                             Button(action: {
@@ -93,6 +107,12 @@ struct LoginView: View {
                                     .font(.custom("Ubuntu-Bold", size: 17))
                                     .foregroundColor(Color(hex: 0xFFFFFF))
                                     .frame(maxWidth: .infinity, maxHeight: 54)
+                                    .navigationDestination(
+                                         isPresented: $confirmLogin) {
+                                             TabBarView()
+                                             Text("")
+                                                  .hidden()
+                                         }
                             }
                             .background(Color(hex: 0x007C38))
                             .cornerRadius(14)
@@ -106,7 +126,6 @@ struct LoginView: View {
                                     .underline()
                             }
                         }
-                        
                         Spacer()
                     }
                 } // VStack Ende
@@ -139,53 +158,69 @@ struct LoginView: View {
         } // NavigationStack Ende
     } //Body Ende
     
-    func checkLogin() {
-        
-        if ((email != "") && (password != "")) {
-            
-            let _parameters: Parameters=[
-                "user_email":email,
-                "password":password
-            ]
-            
-            Alamofire.request(URL_USER_LOGIN, method: .post, parameters: _parameters).responseJSON
-                        {
-                            response in
-                            //printing response
-                            print(response)
-                            
-                            //getting the json value from the server
-                            if let result = response.result.value {
-                                let jsonData = result as! NSDictionary
-                                
-                                //if there is no error
-                                if(!(jsonData.value(forKey: "error") as! Bool)){
-                                    
-                                    //getting the user from response
-                                    let user = jsonData.value(forKey: "user") as! NSDictionary
-                                    
-                                    //getting user values
-                                    let userId = user.value(forKey: "id") as! Int
-                                    let userName = user.value(forKey: "user_name") as! String
-                                    let userEmail = user.value(forKey: "user_email") as! String
-                                    
-                                    //saving user values to defaults
-                                    self.defaultValues.set(userId, forKey: "id")
-                                    self.defaultValues.set(userName, forKey: "user_name")
-                                    self.defaultValues.set(userEmail, forKey: "user_email")
-                                    
-                                    //switching the screen
-                                    print(defaultValues)
-                                    
-                                } else {
-                                    //error message in case of invalid credential
-                                    print("Invalid username or password")
-                                }
-                            }
-                    }
-                }
+    public func existensLogin() {
+        if (UserDefaults.standard.string(forKey: "password") != "")
+        {
+            self.email = UserDefaults.standard.string(forKey: "user_email") ?? ""
+            print(email)
+            self.password = UserDefaults.standard.string(forKey: "password") ?? ""
+            print(password)
+        }
+        checkLogin()
+        print("LOGIN gespeichert und getestet")
     }
     
+    func checkLogin() {
+        if ((email != "") && (password != "")) {
+            let _parameters: Parameters=[
+                "user_email":email,
+                "password":password ]
+            Alamofire.request(URL_USER_LOGIN, method: .post, parameters: _parameters).responseJSON {
+                response in
+                
+                //printing response
+                print(response)
+                
+                //getting the json value from the server
+                if let result = response.result.value {
+                    let jsonData = result as! NSDictionary
+                    //if there is no error
+                    if(!(jsonData.value(forKey: "error") as! Bool)){
+                        
+                        //getting the user from response
+                        let user = jsonData.value(forKey: "user") as! NSDictionary
+                        
+                        //getting user values
+                        let userName = user.value(forKey: "user_name") as! String
+                        let userEmail = user.value(forKey: "user_email") as! String
+                        let id = user.value(forKey: "id") as! Int
+                        let picture = user.value(forKey: "picture") as? String
+                        
+                        //saving user values to defaults
+                        UserDefaults.standard.set(userName, forKey: "user_name")
+                        UserDefaults.standard.set(userEmail, forKey: "user_email")
+                        UserDefaults.standard.set(password, forKey: "password")
+                        UserDefaults.standard.set(id, forKey: "id")
+                        UserDefaults.standard.set(picture, forKey: "picture")
+                        UserDefaults.standard.synchronize()
+                        
+                        //switching the screen
+                        print(defaultValues)
+                        confirmLogin = true
+                        
+                    } else {
+                        //error message in case of invalid credential
+                        print("Invalid username or password")
+                        self.password = ""
+                        self.wrongPassword = true
+                        withAnimation(.default) {
+                            self.attempts += 1
+                        }
+                    }
+                }
+            }
+        }
+    }
 } // View Ende
 
 //Preview
@@ -219,6 +254,8 @@ struct Menu : View {
                           prompt: Text("E-Mail")
                     .foregroundColor(Color(hex: 0x9C9C9C))
                     .font(.custom("Ubuntu-Regular",fixedSize: 20)))
+                .keyboardType(.emailAddress)
+                .autocapitalization(.none)
                 .frame(maxHeight: 38)
                 .padding(10)
                 .background(Color(hex: 0xFAFAFA))
@@ -249,5 +286,19 @@ struct Menu : View {
                 .stroke(Color(hex: 0xC5C5C5), lineWidth: 4)
         }
         .padding()
+    }
+}
+
+// Falsches Passwort schütteln
+
+struct Shake: GeometryEffect {
+    var amount: CGFloat = 10
+    var shakesPerUnit = 3
+    var animatableData: CGFloat
+
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        ProjectionTransform(CGAffineTransform(translationX:
+            amount * sin(animatableData * .pi * CGFloat(shakesPerUnit)),
+            y: 0))
     }
 }

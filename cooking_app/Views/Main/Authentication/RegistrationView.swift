@@ -22,6 +22,8 @@ struct RegistrationView: View {
     @State private var confirmRegistration: Bool = false
     @Environment(\.dismiss) var dismiss
     
+    @State private var keyboardHeight: CGFloat = 0
+    
     var body: some View {
         
         NavigationStack {
@@ -44,6 +46,8 @@ struct RegistrationView: View {
                                   prompt: Text("E-Mail")
                             .foregroundColor(Color(hex: 0x9C9C9C))
                             .font(.custom("Ubuntu-Regular",fixedSize: 17)))
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
                         .frame(maxHeight: 38)
                         .padding(10)
                         .background(Color(hex: 0xFAFAFA))
@@ -67,11 +71,13 @@ struct RegistrationView: View {
                         }
                         .padding(.horizontal, 25)
                         
-                        TextField("Passwort",
+                        SecureField("Passwort",
                                   text: $password,
                                   prompt: Text("Passwort")
                             .foregroundColor(Color(hex: 0x9C9C9C))
                             .font(.custom("Ubuntu-Regular",fixedSize: 17)))
+                        .textContentType(.newPassword)
+                        .autocapitalization(.none)
                         .frame(maxHeight: 38)
                         .padding(10)
                         .background(Color(hex: 0xFAFAFA))
@@ -81,11 +87,13 @@ struct RegistrationView: View {
                         }
                         .padding(.horizontal, 25)
                         
-                        TextField("Passwort bestätigen",
+                        SecureField("Passwort bestätigen",
                                   text: $confirmPassword,
                                   prompt: Text("Passwort bestätigen")
                             .foregroundColor(Color(hex: 0x9C9C9C))
                             .font(.custom("Ubuntu-Regular",fixedSize: 17)))
+                        .textContentType(.newPassword)
+                        .autocapitalization(.none)
                         .frame(maxHeight: 38)
                         .padding(10)
                         .background(Color(hex: 0xFAFAFA))
@@ -107,7 +115,7 @@ struct RegistrationView: View {
                     .background(Color(hex: 0x007C38))
                     .navigationDestination(
                          isPresented: $confirmRegistration) {
-                             HomeView()
+                             TabBarView()
                              Text("")
                                   .hidden()
                          }
@@ -127,6 +135,7 @@ struct RegistrationView: View {
                 
             }
             .background(Color(hex: 0xF2F2F7))
+            .ignoresSafeArea()
         }
         .navigationBarTitle("")
         .navigationBarBackButtonHidden(true)
@@ -164,6 +173,7 @@ struct RegistrationView: View {
         }
     }
 }
+
 
 struct RegistrationView_Previews: PreviewProvider {
     static var previews: some View {
