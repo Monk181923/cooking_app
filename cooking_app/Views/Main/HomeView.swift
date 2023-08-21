@@ -10,18 +10,21 @@ import Alamofire
 
 struct HomeView: View {
     
-    let URL_RECIPES = "http://cookbuddy.marcelruhstorfer.de/getRecipes.php"
+    private let URL_RECIPES = "http://cookbuddy.marcelruhstorfer.de/getRecipes.php"
+    private let URL_RECIPES_SEARCH = "http://cookbuddy.marcelruhstorfer.de/getRecipesSearch.php"
     @State private var recipes: [Recipe] = []
-    @State private var selectedBox: String? = "Vegetarisch"
+    @State private var selectedBox: String? = ""
     @State private var displayedImage: Image? = nil
+    @State private var searchText = ""
     
     var body: some View {
         NavigationView {
+            
             VStack (spacing: 24) {
                 
                 VStack {
                     Text("Hallo " + (UserDefaults.standard.string(forKey: "user_name") ?? "unbekannter User") + "!")
-                        .font(.custom("Ubuntu",fixedSize: 14))
+                        .font(.custom("Ubuntu",fixedSize: 16))
                         .foregroundColor(Color(hex: 0x767676))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 25)
@@ -53,7 +56,9 @@ struct HomeView: View {
                         
                     }
                 }
-            
+                
+                SearchBar(text: $searchText)
+                    .padding()
                 
                 Text("Kategorien")
                     .foregroundColor(Color(hex: 0x000000))
@@ -64,6 +69,10 @@ struct HomeView: View {
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(alignment: .center, spacing: 20) {
+                        CustomBox(iconName: "dinner", text: "Alles", isSelected: selectedBox == "")
+                            .onTapGesture {
+                                selectedBox = ""
+                            }
                         CustomBox(iconName: "carrot", text: "Vegetarisch", isSelected: selectedBox == "Vegetarisch")
                             .onTapGesture {
                                 selectedBox = "Vegetarisch"
@@ -103,14 +112,75 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 25)
                 
-                List(recipes) { recipe in
-                    NavigationLink(destination: RecipeDetail(recipe: recipe)) {
-                        VStack(alignment: .leading) {
-                            Text(recipe.name)
-                                .font(.headline)
-                            Text(recipe.description)
-                                .font(.subheadline)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 20) {
+                            ForEach(recipes.filter { recipe in
+                                switch selectedBox {
+                                case "":
+                                    return true
+                                case "Vegetarisch":
+                                    return recipe.label == "Vegetarisch" || recipe.label == "Vegan"
+                                case "Vegan":
+                                    return recipe.label == "Vegan"
+                                case "Salat":
+                                    return recipe.category == "Salat"
+                                case "Vorspeise":
+                                    return recipe.category == "Vorspeise"
+                                case "Hauptgericht":
+                                    return recipe.category == "Hauptgericht"
+                                case "Dessert":
+                                    return recipe.category == "Dessert"
+                                case "Snack":
+                                    return recipe.category == "Snack"
+                                default:
+                                    return false
+                                }
+                            }, id: \.id) { recipe in
+                                NavigationLink(destination: RecipeView(recipe: recipe)) {
+                                VStack {
+                                    AsyncImage(url: URL(string: recipe.image)) {
+                                        image in
+                                            image
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                                .frame(width: 150, height: 200)
+                                                .cornerRadius(20)
+                                    } placeholder: {
+                                        Image(recipe.image)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(width: 150, height: 200)
+                                            .background(Color.white)
+                                            .cornerRadius(20)
+                                    }
+
+                                    Text(recipe.name)
+                                        .font(.system(size: 18))
+                                        .bold()
+                                        .foregroundColor(Color(hex: 0x000000))
+                                        .padding(.top, 5) // Abstand zwischen Bild und Name
+                                        .frame(maxWidth: 150, alignment: .leading)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
+                                }
+                            }
                         }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
+                }
+                .padding(.bottom, 20)
+                .onChange(of: searchText) { newValue in
+                    if newValue.count > 0 {
+                        getRecipesSearch()
+                        displayedImage = nil
+                        getImage()
+                    }
+                    else {
+                        getRecipes()
+                        displayedImage = nil
+                        getImage()
                     }
                 }
             }
@@ -119,9 +189,11 @@ struct HomeView: View {
         .navigationBarTitle("")
         .navigationBarBackButtonHidden(true)
         .onAppear {
-            getRecipes()
-            displayedImage = nil
-            getImage()
+            if searchText.count < 1 {
+                getRecipes()
+                displayedImage = nil
+                getImage()
+            }
         }
     }//Ende Body
 
@@ -135,6 +207,39 @@ struct HomeView: View {
             }
         }
         
+    }
+    
+    func getRecipesSearch() {
+        let _parameters: Parameters=[
+            "searchTerm":searchText
+        ]
+        
+        Alamofire.request(URL_RECIPES_SEARCH, method: .post, parameters: _parameters).responseJSON{
+            response in
+            print(response)
+            
+            switch response.result {
+            case .success(let jsonData):
+                do {
+                    guard let jsonDict = jsonData as? [String: Any],
+                          let recipesJSON = jsonDict["recipes"] as? [[String: Any]] else {
+                        print("Error: Invalid JSON structure")
+                        self.recipes = []
+                        return
+                    }
+                    
+                    let data = try JSONSerialization.data(withJSONObject: recipesJSON)
+                    let decoder = JSONDecoder()
+                    let recipes = try decoder.decode([Recipe].self, from: data)
+                    self.recipes = recipes
+                } catch {
+                    print("Error decoding recipes: \(error)")
+                }
+            case .failure(let error):
+                print("Vermutlich keine Netzverbindung")
+                print("Error fetching recipes: \(error)")
+            }
+        }
     }
     
     func getRecipes() {
@@ -156,6 +261,7 @@ struct HomeView: View {
                     print("Error decoding recipes: \(error)")
                 }
             case .failure(let error):
+                print("Vermutlich keine Netzverbindung")
                 print("Error fetching recipes: \(error)")
             }
         }
@@ -165,39 +271,12 @@ struct HomeView: View {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView()
-    }
-}
-
-struct RecipeDetail: View {
-    let recipe: Recipe
-
-    var body: some View {
-        VStack {
-            Text(recipe.name)
-                .font(.title)
-            Text(recipe.description)
-                .font(.body)
-            Text(recipe.category)
-                .font(.body)
-            Text(recipe.label)
-                .font(.body)
-            Text(recipe.date)
-                .font(.body)
-            Text(recipe.image)
-                .font(.body)
-            Text(recipe.ingredients)
-                .font(.body)
-            Text(recipe.instruction)
-                .font(.body)
-            Text(String(recipe.id))
-                .font(.body)
-        }
-        .navigationBarTitle(recipe.name)
+        TabBarView()
     }
 }
 
 struct CustomBox: View {
+    
     var iconName: String
     var text: String
     var isSelected: Bool
@@ -224,5 +303,28 @@ struct CustomBox: View {
                     .padding(.bottom, 5)
                     .frame(maxWidth: .infinity)
             })
+    }
+}
+
+struct SearchBar: View {
+    @Binding var text: String
+    
+    var body: some View {
+        HStack {
+            TextField("Search", text: $text)
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color(.white)))
+            
+            if !text.isEmpty {
+                Button(action: {
+                    text = ""
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(Color(.systemGray))
+                        .padding(.horizontal, 8)
+                }
+            }
+        }
     }
 }

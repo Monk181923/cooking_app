@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct TabBarView: View {
+    
     var body: some View {
             TabView {
                     HomeView()
@@ -38,6 +39,7 @@ struct TabBarView: View {
             .navigationBarTitle("")
             .navigationBarBackButtonHidden(true)
             .navigationBarHidden(true)
+            .ignoresSafeArea()
     } // Ende body
 } // Ende TabBarView
 

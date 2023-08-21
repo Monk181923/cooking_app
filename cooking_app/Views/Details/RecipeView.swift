@@ -8,13 +8,261 @@
 import SwiftUI
 
 struct RecipeView: View {
+    
+    @Environment(\.dismiss) var dismiss
+    
+    @State private var selectedPresentationDetent: PresentationDetent = .fraction(0.6)
+    @State private var sheetPosition: CGFloat = UIScreen.main.bounds.height
+    @State private var initialImageFrame: CGRect = .zero
+    @State private var sheetPresented = true
+    
+    let recipe: Recipe
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        GeometryReader { geometry in
+            VStack {
+                GeometryReader { geometryImage in
+                    VStack(alignment: .center) {
+                        VStack {
+                            AsyncImage(
+                                url: URL(string: recipe.image),
+                                content: { image in
+                                    
+                                    let computedHeight: CGFloat = geometryImage.size.height * 0.2 + sheetPosition
+                                    
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: geometry.size.width, height: computedHeight)
+                                        .clipped()
+                                },placeholder: {})
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $sheetPresented) {
+                GeometryReader { sheetGeometry in
+                    RecipeDetails(recipe: recipe)
+                        .ignoresSafeArea()
+                        .presentationCornerRadius(20)
+                        .presentationDetents([
+                            .fraction(0.9),
+                            .fraction(0.6)
+                        ], selection: $selectedPresentationDetent)
+                        .preference(key: SizePreferenceKey.self, value: sheetGeometry.frame(in: .global).minY)
+                        .presentationBackgroundInteraction(
+                            .enabled(upThrough: .fraction(0.6))
+                        )
+                }
+                .onPreferenceChange(SizePreferenceKey.self) { preferences in
+                    self.sheetPosition = preferences
+                }
+                .onDisappear(
+                    perform: {
+                        dismiss()
+                    }
+                )
+            }
+        }
+        .ignoresSafeArea()
+        .navigationBarBackButtonHidden()
     }
 }
 
+
 struct RecipeView_Previews: PreviewProvider {
     static var previews: some View {
-        RecipeView()
+        TabBarView()
+    }
+}
+
+struct SizePreferenceKey: PreferenceKey {
+    typealias Value = CGFloat
+    static var defaultValue: Value = 0
+
+    static func reduce(value: inout Value, nextValue: () -> Value) {
+        value = nextValue()
+    }
+}
+
+struct RecipeDetails: View {
+    
+    let recipe: Recipe
+    @State private var numberOfPersons = 4
+    
+    var body: some View {
+        
+        VStack (alignment: .leading, spacing: 16){
+            
+            VStack (alignment: .leading, spacing: 5) {
+                Text(recipe.name)
+                    .font(.system(size: 20))
+                    .bold()
+                HStack{
+                    Text("von Marcel, " + recipe.date)
+                        .font(.system(size: 14))
+                        .bold()
+                        .foregroundColor(Color(hex: 0xB8B8B8))
+                    Spacer()
+                    Text(recipe.label)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20)
+                                .foregroundColor(Color(hex: 0x007C38))
+                                .opacity(0.9)
+                        )
+                }
+            }
+            .padding(.top, 30)
+            
+            HStack (spacing: 20){
+                HStack{
+                    Image(systemName: "clock.arrow.circlepath")
+                        .foregroundColor(Color(hex: 0xB8B8B8))
+                    Text((recipe.time ?? "-") + " Min")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: 0xB8B8B8))
+                }
+                Spacer()
+                HStack{
+                    Image(systemName: "chart.bar.fill")
+                        .foregroundColor(Color(hex: 0xB8B8B8))
+                    Text(recipe.difficulty ?? "-")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: 0xB8B8B8))
+                }
+                Spacer()
+                HStack{
+                    Image(systemName: "flame")
+                        .foregroundColor(Color(hex: 0xB8B8B8))
+                    Text((recipe.calories ?? "-") + " kcal")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: 0xB8B8B8))
+                }
+            }
+            
+            VStack (alignment: .leading, spacing: 5) {
+                Text("Beschreibung")
+                    .font(.system(size: 20))
+                    .bold()
+                Text(recipe.description)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: 0xB8B8B8))
+            }
+            
+            VStack (alignment: .leading, spacing: 5) {
+                HStack {
+                    Text("Zutaten")
+                        .font(.system(size: 20))
+                        .bold()
+                    Spacer()
+                    HStack (spacing: 0) {
+                        Text("Für ")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: 0x5A5A5A))
+                        Text("\(numberOfPersons)")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: 0x000000))
+                            .bold()
+                        Text(" Personen")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: 0x5A5A5A))
+                    }
+                    Stepper("", value: $numberOfPersons, in: 1...10)
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: 0xB8B8B8))
+                        .labelsHidden()
+                }
+                
+                VStack(alignment: .leading) {
+                    ForEach(parseString(recipe.ingredients), id: \.self) { item in
+                        CustomBoxView(
+                            amount: scaledAmount(amount: item.amount),
+                            unit: item.unit,
+                            product: item.product
+                        )
+                    }
+                }
+                .padding(.top, 10)
+            }
+            
+            VStack (alignment: .leading, spacing: 5) {
+                Text("Anleitung")
+                    .font(.system(size: 20))
+                    .bold()
+                Text(recipe.instruction)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: 0xB8B8B8))
+            }
+            
+        }
+        .padding(.horizontal, 25)
+    }
+    
+    func scaledAmount(amount: String) -> String {
+        guard let originalAmount = Double(amount) else {
+            return amount
+        }
+        
+        let scaledAmount = originalAmount * Double(numberOfPersons) / 4.0
+        
+        if scaledAmount.truncatingRemainder(dividingBy: 1) == 0 {
+            return String(format: "%.0f", scaledAmount)
+        } else {
+            return String(format: "%.2f", scaledAmount)
+        }
+    }
+    
+    func parseString(_ input: String) -> [ParsedItem] {
+        let parts = input.components(separatedBy: ";")
+        var result: [ParsedItem] = []
+        
+        for part in parts {
+            let components = part.components(separatedBy: ",")
+            if components.count == 2 {
+                let item = components[0].components(separatedBy: ":")
+                if item.count == 2 {
+                    let amount = item[0]
+                    let unit = item[1]
+                    let product = components[1]
+                    result.append(ParsedItem(amount: amount, unit: unit, product: product))
+                }
+            }
+        }
+        return result
+        
+    }
+}
+
+struct ParsedItem: Hashable {
+    var id = UUID()
+    var amount: String
+    var unit: String
+    var product: String
+}
+
+struct CustomBoxView: View {
+    
+    let amount: String
+    let unit: String
+    let product: String
+    
+    var body: some View {
+        HStack {
+            HStack {
+                Text(product)
+                    .font(.system(size: 16))
+                    .bold()
+                Spacer()
+                Text("\(amount) \(unit)")
+            }
+            .frame(height: 8)
+            .padding()
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(15)
+        }
     }
 }

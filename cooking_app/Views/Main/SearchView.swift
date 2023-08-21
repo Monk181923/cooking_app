@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import Alamofire
+import PhotosUI
 
 struct SearchView: View {
+
     var body: some View {
         NavigationView {
-            Text("Search")
-                .navigationTitle("Search")
+            VStack {
+                
+            }
         }
     }
 }

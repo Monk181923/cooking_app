@@ -79,6 +79,8 @@ struct SettingsView: View {
                     let imageData = uiImage!.pngData()
                     base64String = imageData!.base64EncodedString()
                     
+                    UserDefaults.standard.set(base64String, forKey: "picture")
+                    
                     addPicture()
                 } label: {
                     Text("Upload")
@@ -105,6 +107,7 @@ struct SettingsView: View {
                 if ((jsonData.value(forKey: "message") as! String) == "Profile Picture added successfully")
                 {
                     avatarImage = nil
+                    avatarItem = nil
                 }
             }
         }

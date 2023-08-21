@@ -15,4 +15,7 @@ struct Recipe: Identifiable, Decodable {
     let date: String
     let ingredients: String
     let instruction: String
+    let difficulty: String?
+    let time: String?
+    let calories: String?
 }
