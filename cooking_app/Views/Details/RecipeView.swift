@@ -6,6 +6,7 @@
 //  Ansicht, wenn rezept angeklickt wird
 
 import SwiftUI
+import Alamofire
 
 struct RecipeView: View {
     
@@ -89,6 +90,9 @@ struct RecipeDetails: View {
     
     let recipe: Recipe
     @State private var numberOfPersons = 4
+    @State private var liked = false
+    let URL_CREATE_LIKE = "http://cookbuddy.marcelruhstorfer.de/createLike.php"
+    let URL_GET_LIKED_RECIPES = "http://cookbuddy.marcelruhstorfer.de/getRecipesId.php"
     
     var body: some View {
         
@@ -98,6 +102,9 @@ struct RecipeDetails: View {
                 Text(recipe.name)
                     .font(.system(size: 20))
                     .bold()
+                    .onAppear {
+                        isRecipeLiked()
+                    }
                 HStack{
                     Text("von Marcel, " + recipe.date)
                         .font(.system(size: 14))
@@ -114,6 +121,15 @@ struct RecipeDetails: View {
                                 .foregroundColor(Color(hex: 0x007C38))
                                 .opacity(0.9)
                         )
+                    Image(systemName: liked ? "heart.fill" : "heart")
+                        .resizable()
+                        .frame(width: 23, height: 20)
+                        .foregroundColor(liked ? .red : .black)
+                        .onTapGesture {
+                            createLike()
+                            isRecipeLiked()
+                            liked.toggle()
+                        }
                 }
             }
             .padding(.top, 30)
@@ -233,8 +249,46 @@ struct RecipeDetails: View {
             }
         }
         return result
-        
     }
+    
+    func isRecipeLiked() {
+        if let likedRecipeIDs = UserDefaults.standard.array(forKey: "likedRecipes") as? [Int] {
+            if (likedRecipeIDs.contains(recipe.id)) {
+                liked = true
+            } else {
+                liked = false
+            }
+        }
+    }
+    
+    func createLike() {
+        let _parameters: Parameters=[
+            "user_id":UserDefaults.standard.string(forKey: "id")!,
+            "recipe_id":recipe.id
+        ]
+        
+        Alamofire.request(URL_CREATE_LIKE, method: .post, parameters: _parameters).responseJSON{
+            response in
+            print(response)
+        }
+        
+        let _parameters2: Parameters=[
+            "user_id":UserDefaults.standard.string(forKey: "id")!
+        ]
+        
+        Alamofire.request(URL_GET_LIKED_RECIPES, method: .post, parameters: _parameters2).responseJSON { response in
+            switch response.result {
+            case .success(let value):
+                if let json = value as? [String: Any], let recipesArray = json["recipes"] as? [[String: Any]] {
+                    let recipeIDs = recipesArray.compactMap { $0["recipe_id"] as? Int }
+                    UserDefaults.standard.set(recipeIDs, forKey: "likedRecipes")
+                }
+            case .failure(let error):
+                print("Request failed with error: \(error)")
+            }
+        }
+    }
+    
 }
 
 struct ParsedItem: Hashable {

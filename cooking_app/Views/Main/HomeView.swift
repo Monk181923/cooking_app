@@ -36,12 +36,16 @@ struct HomeView: View {
                             .bold()
                             .font(.system(size: 24))
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 25)
+                            .padding(.leading, 25)
+                            .multilineTextAlignment(.leading) // Hier kannst du die Ausrichtung anpassen (z.B. .leading, .trailing, .center)
+                            .lineLimit(3) // Dies entfernt die Beschränkung auf die Anzahl der Zeilen
+                            .fixedSize(horizontal: false, vertical: true)
+
                         
                         displayedImage?
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                            .frame(width: 80, height: 80)
+                            .frame(width: 70, height: 70)
                             .clipShape(Circle())
                             .padding(.horizontal, 25)
                         
@@ -49,7 +53,7 @@ struct HomeView: View {
                             Image("profile")
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(width: 80, height: 80)
+                                .frame(width: 70, height: 70)
                                 .clipShape(Circle())
                                 .padding(.horizontal, 25)
                         }
@@ -58,7 +62,6 @@ struct HomeView: View {
                 }
                 
                 SearchBar(text: $searchText)
-                    .padding()
                 
                 Text("Kategorien")
                     .foregroundColor(Color(hex: 0x000000))
@@ -311,9 +314,12 @@ struct SearchBar: View {
     
     var body: some View {
         HStack {
-            TextField("Search", text: $text)
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(Color(.systemGray))
+                .padding(.leading, 14)
+            
+            TextField("Suche nach Rezepten", text: $text)
                 .padding(8)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color(.white)))
             
             if !text.isEmpty {
                 Button(action: {
@@ -326,5 +332,11 @@ struct SearchBar: View {
                 }
             }
         }
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.white))
+                .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
+        )
+        .padding(.horizontal, 25)
     }
 }
