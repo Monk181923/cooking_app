@@ -8,6 +8,7 @@
 struct Recipe: Identifiable, Decodable {
     let id: Int
     let category: String
+    let user_id: Int?
     let label: String
     let image: String
     let name: String

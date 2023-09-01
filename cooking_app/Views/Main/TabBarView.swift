@@ -15,31 +15,37 @@ struct TabBarView: View {
                         .tabItem {
                             Label("Dashboard", systemImage: "house")
                         }
+                        .edgesIgnoringSafeArea(.top)
                     
+                /*
                     SearchView()
                         .tabItem {
                             Label("Suche", systemImage: "magnifyingglass")
                         }
+                 */
                     
-                    NewRecipeView()
+                    CreateRecipeView()
                         .tabItem {
-                            Label("", systemImage: "plus")
+                            Label("Rezept", systemImage: "plus")
                         }
+                        .edgesIgnoringSafeArea(.top)
                     
                     FavoritesView()
                         .tabItem {
                             Label("Kochbuch", systemImage: "bookmark")
                         }
+                        .edgesIgnoringSafeArea(.top)
                     
                     SettingsView()
                         .tabItem {
                             Label("Profil", systemImage: "person")
                         }
+                        .edgesIgnoringSafeArea(.top)
             }
+            .accentColor(Color(hex: 0x007C38))
             .navigationBarTitle("")
             .navigationBarBackButtonHidden(true)
             .navigationBarHidden(true)
-            .ignoresSafeArea()
     } // Ende body
 } // Ende TabBarView
 

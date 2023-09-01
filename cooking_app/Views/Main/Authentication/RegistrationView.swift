@@ -12,6 +12,8 @@ import Foundation
 struct RegistrationView: View {
     
     let URL_USER_REGISTER = "http://cookbuddy.marcelruhstorfer.de/register.php"
+    let URL_USER_LOGIN = "http://cookbuddy.marcelruhstorfer.de/login.php"
+    let defaultValues = UserDefaults.standard
     
     @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
     
@@ -159,11 +161,7 @@ struct RegistrationView: View {
                     
                     if ((jsonData.value(forKey: "message") as! String) == "User created successfully")
                     {
-                        email=""
-                        firstName=""
-                        password=""
-                        confirmPassword=""
-                        confirmRegistration = true
+                        checkLogin()
                     }
                 }
             }
@@ -172,6 +170,71 @@ struct RegistrationView: View {
             confirmRegistration = false
         }
     }
+    
+    func checkLogin() {
+        if ((email != "") && (password != "")) {
+            let _parameters: Parameters=[
+                "user_email":email,
+                "password":password ]
+            Alamofire.request(URL_USER_LOGIN, method: .post, parameters: _parameters).responseJSON {
+                response in
+                
+                //printing response
+                print(response)
+                
+                //getting the json value from the server
+                if let result = response.result.value {
+                    let jsonData = result as! NSDictionary
+                    //if there is no error
+                    if(!(jsonData.value(forKey: "error") as! Bool)){
+                        
+                        //getting the user from response
+                        let user = jsonData.value(forKey: "user") as! NSDictionary
+                        
+                        //getting user values
+                        let userName = user.value(forKey: "user_name") as! String
+                        let userEmail = user.value(forKey: "user_email") as! String
+                        let id = user.value(forKey: "id") as! Int
+                        let picture = user.value(forKey: "picture") as? String
+                        
+                        //saving user values to defaults
+                        UserDefaults.standard.set(userName, forKey: "user_name")
+                        UserDefaults.standard.set(userEmail, forKey: "user_email")
+                        UserDefaults.standard.set(password, forKey: "password")
+                        UserDefaults.standard.set(id, forKey: "id")
+                        UserDefaults.standard.set(picture, forKey: "picture")
+                        
+                        let _parameters2: Parameters=[
+                            "user_id":UserDefaults.standard.string(forKey: "id")!
+                        ]
+                        
+                        Alamofire.request("http://cookbuddy.marcelruhstorfer.de/getRecipesId.php", method: .post, parameters: _parameters2).responseJSON { response in
+                            switch response.result {
+                            case .success(let value):
+                                if let json = value as? [String: Any], let recipesArray = json["recipes"] as? [[String: Any]] {
+                                    let recipeIDs = recipesArray.compactMap { $0["recipe_id"] as? Int }
+                                    UserDefaults.standard.set(recipeIDs, forKey: "likedRecipes")
+                                }
+                            case .failure(let error):
+                                print("Request failed with error: \(error)")
+                            }
+                        }
+                        
+                        UserDefaults.standard.synchronize()
+                        
+                        //switching the screen
+                        email=""
+                        firstName=""
+                        password=""
+                        confirmPassword=""
+                        confirmRegistration = true
+                        
+                    }
+                }
+            }
+        }
+    }
+    
 }
 
 

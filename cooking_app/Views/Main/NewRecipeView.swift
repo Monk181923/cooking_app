@@ -1,8 +1,8 @@
 //
-//  NewRecipeView.swift
+//  StartView.swift
 //  cooking_app
 //
-//  Created by vislab-rechner-1212700 on 12.06.23.
+//  Created by Marcel Ruhstorfer on 18.07.23.
 //
 
 import SwiftUI
@@ -26,11 +26,12 @@ struct NewRecipeView: View {
     @State private var isVeganChecked = false
     @State private var isVegetarianChecked = false
     
+    @State private var cookingDuration: Int = 0
+    
     @State private var recipeItem: PhotosPickerItem?
     @State private var recipeImage: Image?
     @State private var uiImageF: UIImage?
     
-    @State private var cookingDuration: Int = 0
     
     let categorys = ["Salat", "Suppe", "Vorspeise", "Hauptgericht", "Dessert", "Snack"]
     let labels = ["Vegan", "Vegetarisch"]
@@ -81,14 +82,14 @@ struct NewRecipeView: View {
                     }
                 }
                 .onChange(of: isVeganChecked) { newValue in
-                            if newValue {
-                                label = "vegan"
-                                isVegetarianChecked = false
-                            } else if !isVegetarianChecked {
+                        if newValue {
+                            label = "vegan"
+                            isVegetarianChecked = false
+                        } else if !isVegetarianChecked {
                                 label = ""
                             }
                             print(label)
-                        }
+                }
                         .onChange(of: isVegetarianChecked) { newValue in
                             if newValue {
                                 label = "vegetarisch"
@@ -198,9 +199,6 @@ struct NewRecipeView: View {
             }
             
             Button {
-                print("Rezept erstellen gedrückt")
-                print(label + "," + difficulty + "," + time)
-                /*
                 if let inputImage = uiImageF {
                     if let imageData = inputImage.jpegData(compressionQuality: 0.5) {
                         uploadImage(imageData: imageData) { result in
@@ -216,7 +214,6 @@ struct NewRecipeView: View {
                         }
                     }
                 }
-                 */
             } label: {
                 Text("Rezept erstellen")
                     .font(.custom("Ubuntu-Bold", size: 17))
@@ -260,10 +257,11 @@ struct NewRecipeView: View {
         dateFormatter.dateStyle = .medium
         let formattedDate = dateFormatter.string(from: currentDate)
         
-        if ((category != "") && (label != "") && (image != "") && (name != "") && (description != "") && (ingredients != "") && (instruction != "") && (difficulty != "") && (time != "") && (calories != "")) {
+        if ((category != "") && (image != "") && (name != "") && (description != "") && (ingredients != "") && (instruction != "") && (difficulty != "") && (time != "") && (calories != "")) {
             
             let _parameters: Parameters=[
                 "category":category,
+                "user_id":UserDefaults.standard.string(forKey: "id")!,
                 "label":label,
                 "image":image,
                 "name":name,
@@ -333,23 +331,5 @@ struct NewRecipeView: View {
 struct NewRecipeView_Previews: PreviewProvider {
     static var previews: some View {
         NewRecipeView()
-    }
-}
-
-struct CheckBoxView: View {
-    @Binding var isChecked: Bool
-    let text: String
-    
-    var body: some View {
-        
-        Button(action: {
-            isChecked.toggle()
-        }) {
-            HStack {
-                Image(systemName: isChecked ? "checkmark.square.fill" : "square")
-                Text(text)
-            }
-        }
-        
     }
 }

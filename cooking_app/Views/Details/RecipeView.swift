@@ -1,9 +1,9 @@
 //
-//  RecipeView.swift
+//  StartView.swift
 //  cooking_app
 //
-//  Created by vislab-rechner-1212700 on 28.06.23.
-//  Ansicht, wenn rezept angeklickt wird
+//  Created by Marcel Ruhstorfer on 18.07.23.
+//
 
 import SwiftUI
 import Alamofire
@@ -73,7 +73,7 @@ struct RecipeView: View {
 
 struct RecipeView_Previews: PreviewProvider {
     static var previews: some View {
-        TabBarView()
+        HomeView()
     }
 }
 
@@ -91,44 +91,56 @@ struct RecipeDetails: View {
     let recipe: Recipe
     @State private var numberOfPersons = 4
     @State private var liked = false
+    @State private var nameUser: String = ""
     let URL_CREATE_LIKE = "http://cookbuddy.marcelruhstorfer.de/createLike.php"
     let URL_GET_LIKED_RECIPES = "http://cookbuddy.marcelruhstorfer.de/getRecipesId.php"
+    let URL_DELETE_LIKE = "http://cookbuddy.marcelruhstorfer.de/deleteLike.php"
+    let URL_GET_NAME = "http://cookbuddy.marcelruhstorfer.de/getUserName.php"
     
     var body: some View {
         
         VStack (alignment: .leading, spacing: 16){
             
             VStack (alignment: .leading, spacing: 5) {
+                
                 Text(recipe.name)
                     .font(.system(size: 20))
                     .bold()
                     .onAppear {
-                        isRecipeLiked()
+                        getLikes()
+                        getUserName()
                     }
+                
                 HStack{
-                    Text("von Marcel, " + recipe.date)
+                    Text("\(nameUser), \(recipe.date)")
                         .font(.system(size: 14))
                         .bold()
                         .foregroundColor(Color(hex: 0xB8B8B8))
+                    
                     Spacer()
-                    Text(recipe.label)
-                        .font(.system(size: 14))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20)
-                                .foregroundColor(Color(hex: 0x007C38))
-                                .opacity(0.9)
-                        )
+                    
+                    if !recipe.label.isEmpty {
+                        Text(recipe.label)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .foregroundColor(Color(hex: 0x007C38))
+                                    .opacity(0.9)
+                            )
+                    }
                     Image(systemName: liked ? "heart.fill" : "heart")
                         .resizable()
                         .frame(width: 23, height: 20)
                         .foregroundColor(liked ? .red : .black)
                         .onTapGesture {
-                            createLike()
-                            isRecipeLiked()
-                            liked.toggle()
+                            if !liked {
+                                createLike()
+                            } else {
+                                deleteLike()
+                            }
                         }
                 }
             }
@@ -258,6 +270,8 @@ struct RecipeDetails: View {
             } else {
                 liked = false
             }
+        } else {
+            liked = false
         }
     }
     
@@ -270,18 +284,39 @@ struct RecipeDetails: View {
         Alamofire.request(URL_CREATE_LIKE, method: .post, parameters: _parameters).responseJSON{
             response in
             print(response)
+            getLikes()
         }
+    }
+    
+    func deleteLike() {
+        let _parameters: Parameters=[
+            "user_id":UserDefaults.standard.string(forKey: "id")!,
+            "recipe_id":recipe.id
+        ]
         
-        let _parameters2: Parameters=[
+        Alamofire.request(URL_DELETE_LIKE, method: .post, parameters: _parameters).responseJSON{
+            response in
+            print(response)
+            getLikes()
+        }
+    }
+    
+    func getLikes() {
+        let _parameters: Parameters=[
             "user_id":UserDefaults.standard.string(forKey: "id")!
         ]
         
-        Alamofire.request(URL_GET_LIKED_RECIPES, method: .post, parameters: _parameters2).responseJSON { response in
+        Alamofire.request(URL_GET_LIKED_RECIPES, method: .post, parameters: _parameters).responseJSON { response in
             switch response.result {
             case .success(let value):
                 if let json = value as? [String: Any], let recipesArray = json["recipes"] as? [[String: Any]] {
                     let recipeIDs = recipesArray.compactMap { $0["recipe_id"] as? Int }
                     UserDefaults.standard.set(recipeIDs, forKey: "likedRecipes")
+                    isRecipeLiked()
+                } else {
+                    print("Keine Rezepte mehr geliked!")
+                    UserDefaults.standard.set(nil, forKey: "likedRecipes")
+                    isRecipeLiked()
                 }
             case .failure(let error):
                 print("Request failed with error: \(error)")
@@ -289,6 +324,25 @@ struct RecipeDetails: View {
         }
     }
     
+    func getUserName() {
+                             
+        let parameters: Parameters = ["user_id": recipe.user_id ?? 0]
+                             
+        Alamofire.request(URL_GET_NAME, method: .post, parameters: parameters).responseJSON { response in
+            switch response.result {
+                case .success(let value):
+                    if let json = value as? [String: Any], let userName = json["user_name"] as? String {
+                        nameUser = userName
+                    } else {
+                        nameUser = "Unbekannt"
+                    }
+                case .failure(let error):
+                    print("Request failed with error: \(error)")
+                    nameUser = "Unbekannt"
+                }
+        }
+    }
+                         
 }
 
 struct ParsedItem: Hashable {

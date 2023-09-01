@@ -1,9 +1,8 @@
 //
-//  SettingsView.swift
+//  StartView.swift
 //  cooking_app
 //
-//  Created by vislab-rechner-1212700 on 12.06.23.
-//
+//  Created by Marcel Ruhstorfer on 18.07.23.
 //
 
 import SwiftUI
@@ -32,6 +31,7 @@ struct SettingsView: View {
                     UserDefaults.standard.set("", forKey: "user_email")
                     UserDefaults.standard.set("", forKey: "password")
                     UserDefaults.standard.set(nil, forKey: "picture")
+                    UserDefaults.standard.set(nil, forKey: "likedRecipes")
                     UserDefaults.standard.synchronize()
                     logout = true
                     

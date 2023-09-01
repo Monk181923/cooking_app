@@ -1,8 +1,8 @@
 //
-//  HomeView.swift
+//  StartView.swift
 //  cooking_app
 //
-//  Created by vislab-rechner-1212700 on 12.06.23.
+//  Created by Marcel Ruhstorfer on 18.07.23.
 //
 
 import SwiftUI
@@ -18,17 +18,19 @@ struct HomeView: View {
     @State private var searchText = ""
     
     var body: some View {
+        
         NavigationView {
             
             VStack (spacing: 24) {
                 
                 VStack {
+                    
                     Text("Hallo " + (UserDefaults.standard.string(forKey: "user_name") ?? "unbekannter User") + "!")
                         .font(.custom("Ubuntu",fixedSize: 16))
                         .foregroundColor(Color(hex: 0x767676))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 25)
-                        .padding(.top, 18)
+                        .padding(.top, 14)
                     
                     HStack {
                         Text("Was möchtest du heute gerne kochen?")
@@ -38,9 +40,9 @@ struct HomeView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.leading, 25)
                             .multilineTextAlignment(.leading) // Hier kannst du die Ausrichtung anpassen (z.B. .leading, .trailing, .center)
-                            .lineLimit(3) // Dies entfernt die Beschränkung auf die Anzahl der Zeilen
+                            .lineLimit(2) // Dies entfernt die Beschränkung auf die Anzahl der Zeilen
                             .fixedSize(horizontal: false, vertical: true)
-
+                        
                         
                         displayedImage?
                             .resizable()
@@ -57,8 +59,8 @@ struct HomeView: View {
                                 .clipShape(Circle())
                                 .padding(.horizontal, 25)
                         }
-                        
                     }
+                    
                 }
                 
                 SearchBar(text: $searchText)
@@ -117,46 +119,39 @@ struct HomeView: View {
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 20) {
-                            ForEach(recipes.filter { recipe in
-                                switch selectedBox {
-                                case "":
-                                    return true
-                                case "Vegetarisch":
-                                    return recipe.label == "Vegetarisch" || recipe.label == "Vegan"
-                                case "Vegan":
-                                    return recipe.label == "Vegan"
-                                case "Salat":
-                                    return recipe.category == "Salat"
-                                case "Vorspeise":
-                                    return recipe.category == "Vorspeise"
-                                case "Hauptgericht":
-                                    return recipe.category == "Hauptgericht"
-                                case "Dessert":
-                                    return recipe.category == "Dessert"
-                                case "Snack":
-                                    return recipe.category == "Snack"
-                                default:
-                                    return false
-                                }
-                            }, id: \.id) { recipe in
-                                NavigationLink(destination: RecipeView(recipe: recipe)) {
+                        ForEach(recipes.filter { recipe in
+                            switch selectedBox {
+                            case "":
+                                return true
+                            case "Vegetarisch":
+                                return recipe.label == "Vegetarisch" || recipe.label == "Vegan"
+                            case "Vegan":
+                                return recipe.label == "Vegan"
+                            case "Salat":
+                                return recipe.category == "Salat"
+                            case "Vorspeise":
+                                return recipe.category == "Vorspeise"
+                            case "Hauptgericht":
+                                return recipe.category == "Hauptgericht"
+                            case "Dessert":
+                                return recipe.category == "Dessert"
+                            case "Snack":
+                                return recipe.category == "Snack"
+                            default:
+                                return false
+                            }
+                        }, id: \.id) { recipe in
+                            NavigationLink(destination: RecipeView(recipe: recipe)) {
                                 VStack {
                                     AsyncImage(url: URL(string: recipe.image)) {
                                         image in
-                                            image
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fill)
-                                                .frame(width: 150, height: 200)
-                                                .cornerRadius(20)
-                                    } placeholder: {
-                                        Image(recipe.image)
+                                        image
                                             .resizable()
-                                            .aspectRatio(contentMode: .fit)
+                                            .aspectRatio(contentMode: .fill)
                                             .frame(width: 150, height: 200)
-                                            .background(Color.white)
                                             .cornerRadius(20)
-                                    }
-
+                                    } placeholder: {}
+                                    
                                     Text(recipe.name)
                                         .font(.system(size: 18))
                                         .bold()
@@ -186,9 +181,11 @@ struct HomeView: View {
                         getImage()
                     }
                 }
-            }
+                Spacer()
+            }// Ende VStack
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(hex: 0xF2F2F7))
-        }
+        }// Ende NavView
         .navigationBarTitle("")
         .navigationBarBackButtonHidden(true)
         .onAppear {
@@ -274,7 +271,7 @@ struct HomeView: View {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        TabBarView()
+        HomeView()
     }
 }
 

@@ -1,8 +1,8 @@
 //
-//  LoginView.swift
+//  StartView.swift
 //  cooking_app
 //
-//  Created by vislab-rechner-1212700 on 28.06.23.
+//  Created by Marcel Ruhstorfer on 18.07.23.
 //
 
 import SwiftUI
@@ -202,6 +202,23 @@ struct LoginView: View {
                         UserDefaults.standard.set(password, forKey: "password")
                         UserDefaults.standard.set(id, forKey: "id")
                         UserDefaults.standard.set(picture, forKey: "picture")
+                        
+                        let _parameters2: Parameters=[
+                            "user_id":UserDefaults.standard.string(forKey: "id")!
+                        ]
+                        
+                        Alamofire.request("http://cookbuddy.marcelruhstorfer.de/getRecipesId.php", method: .post, parameters: _parameters2).responseJSON { response in
+                            switch response.result {
+                            case .success(let value):
+                                if let json = value as? [String: Any], let recipesArray = json["recipes"] as? [[String: Any]] {
+                                    let recipeIDs = recipesArray.compactMap { $0["recipe_id"] as? Int }
+                                    UserDefaults.standard.set(recipeIDs, forKey: "likedRecipes")
+                                }
+                            case .failure(let error):
+                                print("Request failed with error: \(error)")
+                            }
+                        }
+                        
                         UserDefaults.standard.synchronize()
                         
                         //switching the screen
