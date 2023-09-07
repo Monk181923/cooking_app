@@ -38,12 +38,10 @@ struct SettingsView: View {
                 } label: {
                     Text("Logout")
                         .font(.custom("Ubuntu-Bold", size: 17))
-                        .navigationDestination(
-                            isPresented: $logout) {
-                                StartView()
-                                Text("123")
-                                    .hidden()
-                            }
+                    
+                    NavigationLink(destination: StartView(), isActive: $logout) {
+                        EmptyView()
+                    }
                 }
                 
                 VStack {
@@ -87,6 +85,8 @@ struct SettingsView: View {
                 }
                 
             }//Ende VStack
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(hex: 0xF2F2F7))
         }//Ende NavView
     }
     

@@ -17,27 +17,31 @@ struct FavoritesView: View {
     var body: some View {
         VStack {
             NavigationView {
-                if recipes.isEmpty {
-                    Text("Du hast noch keine Favoriten gespeichert!")
-                } else {
-                    ScrollView {
-                        Text("Favoriten")
-                            .foregroundColor(Color(hex: 0x000000))
-                            .bold()
-                            .font(.system(size: 20))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 25)
-                        
-                        LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
-                            ForEach(recipes) { recipe in
-                                NavigationLink(destination: RecipeView(recipe: recipe)) {
-                                    RoundedBoxView(recipe: recipe)
+                VStack {
+                    if recipes.isEmpty {
+                        Text("Du hast noch keine Favoriten gespeichert!")
+                    } else {
+                        ScrollView {
+                            Text("Favoriten")
+                                .foregroundColor(Color(hex: 0x000000))
+                                .bold()
+                                .font(.system(size: 20))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 25)
+                            
+                            LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
+                                ForEach(recipes) { recipe in
+                                    NavigationLink(destination: RecipeView(recipe: recipe)) {
+                                        RoundedBoxView(recipe: recipe)
+                                    }
                                 }
                             }
                         }
+                        .padding()
                     }
-                    .padding()
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(hex: 0xF2F2F7))
             }
             .onAppear(perform: {
                 getRecipesSearch()

@@ -16,175 +16,203 @@ struct HomeView: View {
     @State private var selectedBox: String? = ""
     @State private var displayedImage: Image? = nil
     @State private var searchText = ""
+    @State private var selectedRecipeID: Int? = 28
+    @State private var isLoadingSelectedRecipe = false
     
     var body: some View {
         
         NavigationView {
             
-            VStack (spacing: 24) {
-                
-                VStack {
-                    
-                    Text("Hallo " + (UserDefaults.standard.string(forKey: "user_name") ?? "unbekannter User") + "!")
-                        .font(.custom("Ubuntu",fixedSize: 16))
-                        .foregroundColor(Color(hex: 0x767676))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 25)
-                        .padding(.top, 14)
-                    
-                    HStack {
-                        Text("Was möchtest du heute gerne kochen?")
-                            .foregroundColor(Color(hex: 0x000000))
-                            .bold()
-                            .font(.system(size: 24))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, 25)
-                            .multilineTextAlignment(.leading) // Hier kannst du die Ausrichtung anpassen (z.B. .leading, .trailing, .center)
-                            .lineLimit(2) // Dies entfernt die Beschränkung auf die Anzahl der Zeilen
-                            .fixedSize(horizontal: false, vertical: true)
+            VStack {
+                ScrollView {
+                    VStack (spacing: 24) {
                         
-                        
-                        displayedImage?
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 70, height: 70)
-                            .clipShape(Circle())
-                            .padding(.horizontal, 25)
-                        
-                        if displayedImage == nil {
-                            Image("profile")
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 70, height: 70)
-                                .clipShape(Circle())
+                        VStack {
+                            
+                            Text("Hallo " + (UserDefaults.standard.string(forKey: "user_name") ?? "unbekannter User") + "!")
+                                .font(.custom("Ubuntu",fixedSize: 16))
+                                .foregroundColor(Color(hex: 0x767676))
+                                .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 25)
-                        }
-                    }
-                    
-                }
-                
-                SearchBar(text: $searchText)
-                
-                Text("Kategorien")
-                    .foregroundColor(Color(hex: 0x000000))
-                    .bold()
-                    .font(.system(size: 20))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 25)
-                
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .center, spacing: 20) {
-                        CustomBox(iconName: "dinner", text: "Alles", isSelected: selectedBox == "")
-                            .onTapGesture {
-                                selectedBox = ""
-                            }
-                        CustomBox(iconName: "carrot", text: "Vegetarisch", isSelected: selectedBox == "Vegetarisch")
-                            .onTapGesture {
-                                selectedBox = "Vegetarisch"
-                            }
-                        CustomBox(iconName: "seedling", text: "Vegan", isSelected: selectedBox == "Vegan")
-                            .onTapGesture {
-                                selectedBox = "Vegan"
-                            }
-                        CustomBox(iconName: "salad", text: "Salat", isSelected: selectedBox == "Salat")
-                            .onTapGesture {
-                                selectedBox = "Salat"
-                            }
-                        CustomBox(iconName: "soup", text: "Vorspeise", isSelected: selectedBox == "Vorspeise")
-                            .onTapGesture {
-                                selectedBox = "Vorspeise"
-                            }
-                        CustomBox(iconName: "pasta", text: "Hauptgericht", isSelected: selectedBox == "Hauptgericht")
-                            .onTapGesture {
-                                selectedBox = "Hauptgericht"
-                            }
-                        CustomBox(iconName: "pudding", text: "Dessert", isSelected: selectedBox == "Dessert")
-                            .onTapGesture {
-                                selectedBox = "Dessert"
-                            }
-                        CustomBox(iconName: "popcorn", text: "Snack", isSelected: selectedBox == "Snack")
-                            .onTapGesture {
-                                selectedBox = "Snack"
-                            }
-                    }
-                    .padding(.horizontal, 25)
-                }
-                
-                Text("Empfehlungen")
-                    .foregroundColor(Color(hex: 0x000000))
-                    .bold()
-                    .font(.system(size: 20))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 25)
-                
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 20) {
-                        ForEach(recipes.filter { recipe in
-                            switch selectedBox {
-                            case "":
-                                return true
-                            case "Vegetarisch":
-                                return recipe.label == "Vegetarisch" || recipe.label == "Vegan"
-                            case "Vegan":
-                                return recipe.label == "Vegan"
-                            case "Salat":
-                                return recipe.category == "Salat"
-                            case "Vorspeise":
-                                return recipe.category == "Vorspeise"
-                            case "Hauptgericht":
-                                return recipe.category == "Hauptgericht"
-                            case "Dessert":
-                                return recipe.category == "Dessert"
-                            case "Snack":
-                                return recipe.category == "Snack"
-                            default:
-                                return false
-                            }
-                        }, id: \.id) { recipe in
-                            NavigationLink(destination: RecipeView(recipe: recipe)) {
-                                VStack {
-                                    AsyncImage(url: URL(string: recipe.image)) {
-                                        image in
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                            .frame(width: 150, height: 200)
-                                            .cornerRadius(20)
-                                    } placeholder: {}
-                                    
-                                    Text(recipe.name)
-                                        .font(.system(size: 18))
-                                        .bold()
-                                        .foregroundColor(Color(hex: 0x000000))
-                                        .padding(.top, 5) // Abstand zwischen Bild und Name
-                                        .frame(maxWidth: 150, alignment: .leading)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                        .lineLimit(2)
-                                        .multilineTextAlignment(.leading)
+                                .padding(.top, 14)
+                            
+                            HStack {
+                                Text("Was möchtest du heute gerne kochen?")
+                                    .foregroundColor(Color(hex: 0x000000))
+                                    .bold()
+                                    .font(.system(size: 24))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading, 25)
+                                    .multilineTextAlignment(.leading) // Hier kannst du die Ausrichtung anpassen (z.B. .leading, .trailing, .center)
+                                    .lineLimit(2) // Dies entfernt die Beschränkung auf die Anzahl der Zeilen
+                                    .fixedSize(horizontal: false, vertical: true)
+                                
+                                
+                                displayedImage?
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 70, height: 70)
+                                    .clipShape(Circle())
+                                    .padding(.horizontal, 25)
+                                
+                                if displayedImage == nil {
+                                    Image("profile")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 70, height: 70)
+                                        .clipShape(Circle())
+                                        .padding(.horizontal, 25)
                                 }
                             }
+                            
                         }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
-                }
-                .padding(.bottom, 20)
-                .onChange(of: searchText) { newValue in
-                    if newValue.count > 0 {
-                        getRecipesSearch()
-                        displayedImage = nil
-                        getImage()
-                    }
-                    else {
-                        getRecipes()
-                        displayedImage = nil
-                        getImage()
-                    }
-                }
-                Spacer()
-            }// Ende VStack
+                        
+                        SearchBar(text: $searchText)
+                        
+                        Text("Kategorien")
+                            .foregroundColor(Color(hex: 0x000000))
+                            .bold()
+                            .font(.system(size: 20))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 25)
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(alignment: .center, spacing: 20) {
+                                CustomBox(iconName: "dinner", text: "Alles", isSelected: selectedBox == "")
+                                    .onTapGesture {
+                                        selectedBox = ""
+                                    }
+                                CustomBox(iconName: "carrot", text: "Vegetarisch", isSelected: selectedBox == "Vegetarisch")
+                                    .onTapGesture {
+                                        selectedBox = "Vegetarisch"
+                                    }
+                                CustomBox(iconName: "seedling", text: "Vegan", isSelected: selectedBox == "Vegan")
+                                    .onTapGesture {
+                                        selectedBox = "Vegan"
+                                    }
+                                CustomBox(iconName: "salad", text: "Salat", isSelected: selectedBox == "Salat")
+                                    .onTapGesture {
+                                        selectedBox = "Salat"
+                                    }
+                                CustomBox(iconName: "soup", text: "Vorspeise", isSelected: selectedBox == "Vorspeise")
+                                    .onTapGesture {
+                                        selectedBox = "Vorspeise"
+                                    }
+                                CustomBox(iconName: "pasta", text: "Hauptgericht", isSelected: selectedBox == "Hauptgericht")
+                                    .onTapGesture {
+                                        selectedBox = "Hauptgericht"
+                                    }
+                                CustomBox(iconName: "pudding", text: "Dessert", isSelected: selectedBox == "Dessert")
+                                    .onTapGesture {
+                                        selectedBox = "Dessert"
+                                    }
+                                CustomBox(iconName: "popcorn", text: "Snack", isSelected: selectedBox == "Snack")
+                                    .onTapGesture {
+                                        selectedBox = "Snack"
+                                    }
+                            }
+                            .padding(.horizontal, 25)
+                        }
+                        
+                        Text("Empfehlungen")
+                            .foregroundColor(Color(hex: 0x000000))
+                            .bold()
+                            .font(.system(size: 20))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 25)
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 20) {
+                                ForEach(recipes.filter { recipe in
+                                    switch selectedBox {
+                                    case "":
+                                        return true
+                                    case "Vegetarisch":
+                                        return recipe.label == "Vegetarisch" || recipe.label == "Vegan"
+                                    case "Vegan":
+                                        return recipe.label == "Vegan"
+                                    case "Salat":
+                                        return recipe.category == "Salat"
+                                    case "Vorspeise":
+                                        return recipe.category == "Vorspeise"
+                                    case "Hauptgericht":
+                                        return recipe.category == "Hauptgericht"
+                                    case "Dessert":
+                                        return recipe.category == "Dessert"
+                                    case "Snack":
+                                        return recipe.category == "Snack"
+                                    default:
+                                        return false
+                                    }
+                                }, id: \.id) { recipe in
+                                    NavigationLink(destination: RecipeView(recipe: recipe)) {
+                                        VStack {
+                                            AsyncImage(url: URL(string: recipe.image)) {
+                                                image in
+                                                image
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fill)
+                                                    .frame(width: 150, height: 200)
+                                                    .cornerRadius(20)
+                                            } placeholder: {}
+                                            
+                                            Text(recipe.name)
+                                                .font(.system(size: 18))
+                                                .bold()
+                                                .foregroundColor(Color(hex: 0x000000))
+                                                .padding(.top, 5) // Abstand zwischen Bild und Name
+                                                .frame(maxWidth: 150, alignment: .leading)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                                .lineLimit(2)
+                                                .multilineTextAlignment(.leading)
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 20)
+                        }
+                        .padding(.bottom, 20)
+                        .onChange(of: searchText) { newValue in
+                            if newValue.count > 0 {
+                                getRecipesSearch()
+                                displayedImage = nil
+                                getImage()
+                            }
+                            else {
+                                getRecipes()
+                                displayedImage = nil
+                                getImage()
+                            }
+                        }
+                        
+                        Text("Gericht der Woche")
+                            .foregroundColor(Color(hex: 0x000000))
+                            .bold()
+                            .font(.system(size: 20))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 25)
+                        
+                        if let selectedRecipe = recipes.first(where: { $0.id == selectedRecipeID }) {
+                            NavigationLink(destination: RecipeView(recipe: selectedRecipe)) {
+                                SelectedRecipeView(recipe: selectedRecipe)
+                                    .padding(.horizontal, 25)
+                            }
+                        } else {
+                            Text("Kein Rezept verfügbar")
+                                .foregroundColor(.gray)
+                                .italic()
+                                .padding(.horizontal, 25)
+                        }
+                        
+                        Spacer()
+                        
+                    }// Ende VStack
+                } // Ende ScrollView
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(hex: 0xF2F2F7))
+            
         }// Ende NavView
         .navigationBarTitle("")
         .navigationBarBackButtonHidden(true)
@@ -193,9 +221,17 @@ struct HomeView: View {
                 getRecipes()
                 displayedImage = nil
                 getImage()
+                loadSelectedRecipe()
             }
         }
     }//Ende Body
+    
+    func loadSelectedRecipe() {
+        let desiredRecipeID = 28
+        if let selectedRecipe = recipes.first(where: { $0.id == desiredRecipeID }) {
+            selectedRecipeID = desiredRecipeID
+        }
+    }
 
     func getImage() {
     
@@ -335,5 +371,41 @@ struct SearchBar: View {
                 .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
         )
         .padding(.horizontal, 25)
+    }
+}
+
+struct SelectedRecipeView: View {
+    var recipe: Recipe
+
+    var body: some View {
+        VStack {
+            HStack (spacing: 12) {
+                
+                AsyncImage(url: URL(string: recipe.image)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 150, height: 200)
+                        .cornerRadius(20)
+                } placeholder: {}
+
+                VStack(alignment: .center, spacing: 8) {
+                    Text(recipe.name)
+                        .font(.system(size: 18))
+                        .bold()
+                        .foregroundColor(Color(hex: 0x000000))
+
+                    Text(recipe.description)
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: 0x767676))
+                        .lineLimit(3) // Begrenzt die Anzahl der Zeilen auf 3
+                }
+            }
+            .padding(20)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.white))
+        )
     }
 }

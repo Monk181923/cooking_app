@@ -14,8 +14,13 @@ struct SearchView: View {
     var body: some View {
         NavigationView {
             VStack {
-                
+                Text("1")
             }
+            .padding(.bottom, 0)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea(.all)
+            .edgesIgnoringSafeArea(.all)
+            .background(Color.red)
         }
     }
 }

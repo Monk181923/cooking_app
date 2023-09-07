@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import UIKit
 
 @main
 struct cooking_appApp: App {
+    
     var body: some Scene {
         WindowGroup {
             SplashScreenView()

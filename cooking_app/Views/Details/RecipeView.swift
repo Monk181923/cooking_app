@@ -97,137 +97,163 @@ struct RecipeDetails: View {
     let URL_DELETE_LIKE = "http://cookbuddy.marcelruhstorfer.de/deleteLike.php"
     let URL_GET_NAME = "http://cookbuddy.marcelruhstorfer.de/getUserName.php"
     
+    private var formattedDate: String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        if let date = dateFormatter.date(from: recipe.date) {
+            dateFormatter.dateFormat = "dd.MM.yyyy"
+            return dateFormatter.string(from: date)
+        } else {
+            return ""
+        }
+    }
+    
     var body: some View {
         
-        VStack (alignment: .leading, spacing: 16){
-            
-            VStack (alignment: .leading, spacing: 5) {
+        ScrollView {
+            VStack (alignment: .leading, spacing: 16){
                 
-                Text(recipe.name)
-                    .font(.system(size: 20))
-                    .bold()
-                    .onAppear {
-                        getLikes()
-                        getUserName()
-                    }
-                
-                HStack{
-                    Text("\(nameUser), \(recipe.date)")
-                        .font(.system(size: 14))
-                        .bold()
-                        .foregroundColor(Color(hex: 0xB8B8B8))
+                VStack (alignment: .leading, spacing: 5) {
                     
-                    Spacer()
-                    
-                    if !recipe.label.isEmpty {
-                        Text(recipe.label)
-                            .font(.system(size: 14))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .foregroundColor(Color(hex: 0x007C38))
-                                    .opacity(0.9)
-                            )
-                    }
-                    Image(systemName: liked ? "heart.fill" : "heart")
-                        .resizable()
-                        .frame(width: 23, height: 20)
-                        .foregroundColor(liked ? .red : .black)
-                        .onTapGesture {
-                            if !liked {
-                                createLike()
-                            } else {
-                                deleteLike()
-                            }
-                        }
-                }
-            }
-            .padding(.top, 30)
-            
-            HStack (spacing: 20){
-                HStack{
-                    Image(systemName: "clock.arrow.circlepath")
-                        .foregroundColor(Color(hex: 0xB8B8B8))
-                    Text((recipe.time ?? "-") + " Min")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: 0xB8B8B8))
-                }
-                Spacer()
-                HStack{
-                    Image(systemName: "chart.bar.fill")
-                        .foregroundColor(Color(hex: 0xB8B8B8))
-                    Text(recipe.difficulty ?? "-")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: 0xB8B8B8))
-                }
-                Spacer()
-                HStack{
-                    Image(systemName: "flame")
-                        .foregroundColor(Color(hex: 0xB8B8B8))
-                    Text((recipe.calories ?? "-") + " kcal")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: 0xB8B8B8))
-                }
-            }
-            
-            VStack (alignment: .leading, spacing: 5) {
-                Text("Beschreibung")
-                    .font(.system(size: 20))
-                    .bold()
-                Text(recipe.description)
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(hex: 0xB8B8B8))
-            }
-            
-            VStack (alignment: .leading, spacing: 5) {
-                HStack {
-                    Text("Zutaten")
+                    Text(recipe.name)
                         .font(.system(size: 20))
                         .bold()
-                    Spacer()
-                    HStack (spacing: 0) {
-                        Text("Für ")
+                        .onAppear {
+                            getLikes()
+                            getUserName()
+                        }
+                    
+                    HStack{
+                        Text("von \(nameUser), \(formattedDate)")
                             .font(.system(size: 14))
-                            .foregroundColor(Color(hex: 0x5A5A5A))
-                        Text("\(numberOfPersons)")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(hex: 0x000000))
                             .bold()
-                        Text(" Personen")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(hex: 0x5A5A5A))
+                            .foregroundColor(Color(hex: 0xB8B8B8))
+                        
+                        Spacer()
+                        
+                        if !recipe.label.isEmpty {
+                            Text(recipe.label)
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .foregroundColor(Color(hex: 0x007C38))
+                                        .opacity(0.9)
+                                )
+                        }
+                        Image(systemName: liked ? "heart.fill" : "heart")
+                            .resizable()
+                            .frame(width: 23, height: 20)
+                            .foregroundColor(liked ? .red : .black)
+                            .onTapGesture {
+                                if !liked {
+                                    createLike()
+                                } else {
+                                    deleteLike()
+                                }
+                            }
                     }
-                    Stepper("", value: $numberOfPersons, in: 1...10)
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: 0xB8B8B8))
-                        .labelsHidden()
+                }
+                .padding(.top, 30)
+                
+                HStack (spacing: 20){
+                    HStack{
+                        Image(systemName: "clock.arrow.circlepath")
+                            .foregroundColor(Color(hex: 0xB8B8B8))
+                        Text((recipe.time ?? "-") + " Min")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: 0xB8B8B8))
+                    }
+                    Spacer()
+                    HStack{
+                        Image(systemName: "chart.bar.fill")
+                            .foregroundColor(Color(hex: 0xB8B8B8))
+                        Text(recipe.difficulty ?? "-")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: 0xB8B8B8))
+                    }
+                    Spacer()
+                    HStack{
+                        Image(systemName: "flame")
+                            .foregroundColor(Color(hex: 0xB8B8B8))
+                        Text((recipe.calories ?? "-") + " kcal")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: 0xB8B8B8))
+                    }
                 }
                 
-                VStack(alignment: .leading) {
-                    ForEach(parseString(recipe.ingredients), id: \.self) { item in
-                        CustomBoxView(
-                            amount: scaledAmount(amount: item.amount),
-                            unit: item.unit,
-                            product: item.product
-                        )
+                VStack (alignment: .leading, spacing: 5) {
+                    Text("Beschreibung")
+                        .font(.system(size: 20))
+                        .bold()
+                    Text(recipe.description)
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: 0x404040))
+                }
+                
+                VStack (alignment: .leading, spacing: 5) {
+                    HStack {
+                        Text("Zutaten")
+                            .font(.system(size: 20))
+                            .bold()
+                        Spacer()
+                        HStack (spacing: 0) {
+                            Text("Für ")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: 0x5A5A5A))
+                            Text("\(numberOfPersons)")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: 0x000000))
+                                .bold()
+                            Text(" Personen")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: 0x5A5A5A))
+                        }
+                        Stepper("", value: $numberOfPersons, in: 1...99)
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: 0xB8B8B8))
+                            .labelsHidden()
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        ForEach(parseString(recipe.ingredients), id: \.self) { item in
+                            CustomBoxView(
+                                amount: scaledAmount(amount: item.amount),
+                                unit: item.unit,
+                                product: item.product
+                            )
+                        }
+                    }
+                    .padding(.top, 10)
+                }
+                
+                VStack(alignment: .leading, spacing: 5) {
+                    
+                    Text("Anleitung")
+                        .font(.system(size: 20))
+                        .bold()
+
+                    ForEach(Array(parseStringInstruction(recipe.instruction).enumerated()), id: \.1.id) { (index, item) in
+                        VStack (alignment: .leading) {
+                            Text("Schritt \(index + 1):")
+                                .font(.system(size: 16))
+                                .bold()
+                                .padding(.trailing, 5) // Fügen Sie etwas Abstand zwischen der Schrittnummer und dem Text hinzu
+                            CustomInstructionView(
+                                step: item.step
+                            )
+                        }
+                        .padding(.top, 5)
                     }
                 }
-                .padding(.top, 10)
+                
             }
-            
-            VStack (alignment: .leading, spacing: 5) {
-                Text("Anleitung")
-                    .font(.system(size: 20))
-                    .bold()
-                Text(recipe.instruction)
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(hex: 0xB8B8B8))
-            }
-            
+            .padding(.horizontal, 25)
+            .padding(.bottom, 45)
         }
-        .padding(.horizontal, 25)
     }
     
     func scaledAmount(amount: String) -> String {
@@ -260,6 +286,17 @@ struct RecipeDetails: View {
                 }
             }
         }
+        return result
+    }
+    
+    func parseStringInstruction(_ input: String) -> [ParsedInstruction] {
+        let parts = input.components(separatedBy: ";")
+        var result: [ParsedInstruction] = []
+
+        for part in parts {
+            result.append(ParsedInstruction(step: part))
+        }
+
         return result
     }
     
@@ -352,6 +389,11 @@ struct ParsedItem: Hashable {
     var product: String
 }
 
+struct ParsedInstruction: Hashable {
+    var id = UUID()
+    var step: String
+}
+
 struct CustomBoxView: View {
     
     let amount: String
@@ -371,6 +413,23 @@ struct CustomBoxView: View {
             .padding()
             .background(Color.gray.opacity(0.1))
             .cornerRadius(15)
+        }
+    }
+}
+
+struct CustomInstructionView: View {
+    
+    let step: String
+    
+    var body: some View {
+        HStack {
+            Text(step)
+                .font(.system(size: 16))
+                .foregroundColor(Color(hex: 0x404040))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(15)
         }
     }
 }

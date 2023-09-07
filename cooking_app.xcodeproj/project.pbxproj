@@ -164,6 +164,7 @@
 				A322802A2A371D43003EB1EE /* SettingsView.swift */,
 				A322802C2A371FDF003EB1EE /* FavoritesView.swift */,
 				A322802E2A37200C003EB1EE /* NewRecipeView.swift */,
+				67FD3BD92A969D70004342BC /* CreateRecipeView.swift */,
 				A32280322A372063003EB1EE /* HomeView.swift */,
 				A32280342A3730A3003EB1EE /* TabBarView.swift */,
 				A32280382A4063E7003EB1EE /* SearchView.swift */,
@@ -183,7 +184,6 @@
 			isa = PBXGroup;
 			children = (
 				A322804C2A52DAD9003EB1EE /* ProfileView.swift */,
-				67FD3BD92A969D70004342BC /* CreateRecipeView.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";

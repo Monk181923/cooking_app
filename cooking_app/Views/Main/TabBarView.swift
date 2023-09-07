@@ -9,43 +9,55 @@ import SwiftUI
 
 struct TabBarView: View {
     
+    @State private var selectedTab: Int = 0
+    
+    init() {
+        UITabBar.appearance().backgroundColor = UIColor(Color(hex: 0xF2F2F7))
+    }
+    
     var body: some View {
-            TabView {
-                    HomeView()
-                        .tabItem {
-                            Label("Dashboard", systemImage: "house")
-                        }
-                        .edgesIgnoringSafeArea(.top)
-                    
-                /*
-                    SearchView()
-                        .tabItem {
-                            Label("Suche", systemImage: "magnifyingglass")
-                        }
-                 */
-                    
-                    CreateRecipeView()
-                        .tabItem {
-                            Label("Rezept", systemImage: "plus")
-                        }
-                        .edgesIgnoringSafeArea(.top)
-                    
-                    FavoritesView()
-                        .tabItem {
-                            Label("Kochbuch", systemImage: "bookmark")
-                        }
-                        .edgesIgnoringSafeArea(.top)
-                    
-                    SettingsView()
-                        .tabItem {
-                            Label("Profil", systemImage: "person")
-                        }
-                        .edgesIgnoringSafeArea(.top)
-            }
-            .accentColor(Color(hex: 0x007C38))
-            .navigationBarTitle("")
-            .navigationBarBackButtonHidden(true)
-            .navigationBarHidden(true)
+
+        TabView () {
+                HomeView()
+                    .tabItem {
+                        Label("Dashboard", systemImage: "house")
+                    }
+                    .edgesIgnoringSafeArea(.bottom)
+                    .tag(0)
+                
+            /*
+                SearchView()
+                    .tabItem {
+                        Label("Suche", systemImage: "magnifyingglass")
+                    }
+             */
+                
+                CreateRecipeView(selectedTab: $selectedTab)
+                    .tabItem {
+                        Label("Rezept", systemImage: "plus")
+                    }
+                    .edgesIgnoringSafeArea(.bottom)
+                    .tag(1)
+                
+                FavoritesView()
+                    .tabItem {
+                        Label("Kochbuch", systemImage: "bookmark")
+                    }
+                    .edgesIgnoringSafeArea(.bottom)
+                    .tag(2)
+                
+                SettingsView()
+                    .tabItem {
+                        Label("Profil", systemImage: "person")
+                    }
+                    .edgesIgnoringSafeArea(.bottom)
+                    .tag(3)
+        }
+        .accentColor(Color(hex: 0x007C38))
+        .navigationBarTitle("")
+        .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true)
+        
     } // Ende body
 } // Ende TabBarView
 

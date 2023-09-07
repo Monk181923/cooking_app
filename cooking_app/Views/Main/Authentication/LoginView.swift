@@ -23,11 +23,10 @@ struct LoginView: View {
     
     var body: some View {
         
-        NavigationStack {
-            
-            ZStack {
+        VStack {
+            NavigationStack {
+
                 VStack (spacing: 42) {
-                    Spacer()
                     
                     // Logo Image
                     Image("logo")
@@ -60,8 +59,8 @@ struct LoginView: View {
                                 .padding(.horizontal, 25)
                                 
                                 SecureField("Passwort",
-                                          text: $password,
-                                          prompt: Text("Passwort")
+                                            text: $password,
+                                            prompt: Text("Passwort")
                                     .foregroundColor(Color(hex: 0x9C9C9C))
                                     .font(.custom("Ubuntu-Bold",fixedSize: 17)))
                                 .textContentType(.password)
@@ -80,7 +79,7 @@ struct LoginView: View {
                                     }
                                 }
                                 .modifier(Shake(animatableData: CGFloat(attempts)))
-
+                                
                             }
                             
                             Button(action: {
@@ -107,17 +106,24 @@ struct LoginView: View {
                                     .font(.custom("Ubuntu-Bold", size: 17))
                                     .foregroundColor(Color(hex: 0xFFFFFF))
                                     .frame(maxWidth: .infinity, maxHeight: 54)
-                                    .navigationDestination(
-                                         isPresented: $confirmLogin) {
-                                             TabBarView()
-                                             Text("")
-                                                  .hidden()
-                                         }
+                                
+                                NavigationLink(destination: TabBarView(), isActive: $confirmLogin) {
+                                    EmptyView()
+                                }
                             }
                             .background(Color(hex: 0x007C38))
                             .cornerRadius(14)
                             .shadow(radius: 4, x: 0, y: 5)
                             .padding(.horizontal, 25)
+                            
+                            /*
+                             .navigationDestination(
+                             isPresented: $confirmLogin) {
+                             TabBarView()
+                             Text("")
+                             .hidden()
+                             }
+                             */
                             
                             NavigationLink (destination: RegistrationView()) {
                                 Text("Ich habe noch keinen Account!")
@@ -126,13 +132,8 @@ struct LoginView: View {
                                     .underline()
                             }
                         }
-                        Spacer()
                     }
                 } // VStack Ende
-                .background(Color(hex: 0xF2F2F7))
-                .navigationBarTitle("")
-                .navigationBarBackButtonHidden(true)
-                .navigationBarHidden(true)
                 
                 //GeometryReader für das einblenden der "Passwort vergessen" View
                 if self.show {
@@ -154,8 +155,15 @@ struct LoginView: View {
                     }
                     .background(Color.black.opacity(0.65))
                 }
-            } //ZStack Ende
-        } // NavigationStack Ende
+            } // NavigationStack Ende
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea()
+        .background(Color(hex: 0xF2F2F7))
+        .navigationBarTitle("")
+        .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true)
+        
     } //Body Ende
     
     public func existensLogin() {

@@ -11,6 +11,8 @@ import PhotosUI
 
 struct CreateRecipeView: View {
     
+   @Binding var selectedTab: Int
+    
     @State private var category = "Hauptgericht"
     @State private var label = ""
     @State private var image = ""
@@ -22,29 +24,192 @@ struct CreateRecipeView: View {
     @State private var difficulty = "Leicht"
     @State private var time = "0"
     @State private var calories = "450"
+    @State private var isVeganChecked = false
+    @State private var isVegetarianChecked = false
+    @State private var cookingDuration: Int = 0
     
+    @State private var sendToServer = false
     @State private var uiImageF: UIImage?
+    @State private var recipeItem: PhotosPickerItem?
+    @State private var recipeImage: Image?
+    
+    @State private var objects: [Ingredient] = [Ingredient()]
+    @State private var steps: [Steps] = [Steps()]
     
     let URL_CREATE_RECIPE = "http://cookbuddy.marcelruhstorfer.de/createRecipe.php"
+    @State private var errorMessage: String = ""
+    @State private var showAlert: Bool = false
+    @State private var showConfirm: Bool = false
     
-    @State private var currentPageIndex = 2
+    @State private var currentPageIndex = 0
     
     var body: some View {
         VStack {
+            
             TabView(selection: $currentPageIndex) {
-                NameSelectionPage(currentPageIndex: $currentPageIndex, name: $name, description: $description, uiImageF: $uiImageF)
+                NameSelectionPage(currentPageIndex: $currentPageIndex, name: $name, description: $description, uiImageF: $uiImageF, recipeItem: $recipeItem, recipeImage: $recipeImage)
                     .tag(0)
-                DetailSelectionPage(currentPageIndex: $currentPageIndex, category: $category, label: $label, difficulty: $difficulty, time: $time, calories: $calories)
+                DetailSelectionPage(currentPageIndex: $currentPageIndex, category: $category, label: $label, difficulty: $difficulty, time: $time, calories: $calories, isVeganChecked: $isVeganChecked, isVegetarianChecked: $isVegetarianChecked, cookingDuration: $cookingDuration)
                     .tag(1)
-                instructionSelectionPage(currentPageIndex: $currentPageIndex, ingredients: $ingredients)
+                instructionSelectionPage(currentPageIndex: $currentPageIndex, ingredients: $ingredients, instruction: $instruction, sendToServer: $sendToServer, objects: $objects, steps: $steps)
                     .tag(2)
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+            .alert(isPresented: $showAlert) {
+                Alert(title: Text("Fehlende Einträge"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+            }
             
             ProgressDots(currentPageIndex: currentPageIndex, pageCount: 6)
                 .padding(.vertical)
+                .padding(.bottom, 70)
+                .alert(isPresented: $showConfirm) {
+                    Alert(
+                        title: Text("Rezept erstellen"),
+                        message: Text("Sind Sie sicher, dass Sie das Rezept erstellen möchten?"),
+                        primaryButton: .default(Text("Ja")) {
+                            createRecipe()
+                        },
+                        secondaryButton: .cancel(Text("Abbrechen"))
+                    )
+                }
+
+            Text(sendToServer ? "True" : "False")
+                .opacity(0)
+                .frame(width: 0, height: 0)
+                .onChange(of: sendToServer) { newValue in
+                    if newValue {
+                        sendToServer = false
+                        startProcess()
+                    }
+                }
         }
         .background(Color(hex: 0xF2F2F7))
+    }
+    
+    func startProcess() {
+        if ((name != "") && (description != "") && (ingredients != "") && (instruction != "")) {
+            if let inputImage = uiImageF {
+                if let imageData = inputImage.jpegData(compressionQuality: 0.5) {
+                    uploadImage(imageData: imageData) { result in
+                        switch result {
+                        case .success(let imageURL):
+                            print("Image uploaded successfully. URL: \(imageURL)")
+                            image = imageURL
+                            showConfirm = true
+                        case .failure(let error):
+                            print("Image upload failed. Error: \(error)")
+                            image = "ERROR"
+                        }
+                    }
+                }
+            } else {
+                emptyContent()
+            }
+        } else {
+            emptyContent()
+        }
+    }
+    
+    func emptyContent() {
+        errorMessage = "Bitte füllen Sie alle erforderlichen Felder aus: "
+            
+        if name == "" { errorMessage += "Name, " }
+        if description == "" { errorMessage += "Beschreibung, " }
+        if recipeImage == nil { errorMessage += "Bild, " }
+        if ingredients == "" { errorMessage += "Zutaten, " }
+        if instruction == "" { errorMessage += "Kochanleitung, " }
+
+        errorMessage = String(errorMessage.dropLast(2))
+
+        showAlert = true
+    }
+    
+    func createRecipe() {
+        
+        let currentDate = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let formattedDate = dateFormatter.string(from: currentDate)
+        
+        let _parameters: Parameters=[
+            "category":category,
+            "user_id":UserDefaults.standard.string(forKey: "id")!,
+            "label":label,
+            "image":image,
+            "name":name,
+            "date":formattedDate,
+            "description":description,
+            "ingredients":ingredients,
+            "instruction":instruction,
+            "difficulty":difficulty,
+            "time":time,
+            "calories":calories
+        ]
+        
+        Alamofire.request(URL_CREATE_RECIPE, method: .post, parameters: _parameters).responseJSON{
+            response in
+            print(response)
+            
+            if let result = response.result.value {
+                let jsonData = result as! NSDictionary
+                
+                if ((jsonData.value(forKey: "message") as! String) == "Recipe created successfully")
+                {
+                    category = "Hauptgericht"
+                    label = ""
+                    image = ""
+                    name = ""
+                    description = ""
+                    date = ""
+                    ingredients = ""
+                    instruction = ""
+                    difficulty = "Leicht"
+                    time = "0"
+                    calories = "450"
+                    objects = [Ingredient()]
+                    steps = [Steps()]
+                    currentPageIndex = 0
+                    isVeganChecked = false
+                    isVegetarianChecked = false
+                    cookingDuration = 0
+                    
+                    recipeItem = nil
+                    recipeImage = nil
+                    uiImageF = nil
+                    
+                    selectedTab = 0
+                }
+            }
+        }
+    }
+    
+    func uploadImage(imageData: Data, completion: @escaping (Swift.Result<String, Error>) -> Void) {
+        let url = "http://cookbuddy.marcelruhstorfer.de/imageUpload.php"
+        let validName = name
+            .replacingOccurrences(of: " ", with: "_")
+            .folding(options: .diacriticInsensitive, locale: nil)
+
+        Alamofire.upload(multipartFormData: { multipartFormData in
+            multipartFormData.append(imageData, withName: "image", fileName: validName + ".jpg", mimeType: "image/jpeg")
+        }, to: url) { result in
+            switch result {
+            case .success(let uploadRequest, _, _):
+                uploadRequest.responseJSON { response in
+                    switch response.result {
+                    case .success(let value):
+                        if let imageURL = (value as? [String: Any])?["imageURL"] as? String {
+                            completion(.success(imageURL))
+                        } else {
+                            completion(.failure(NSError(domain: "Response error", code: 0, userInfo: nil)))
+                        }
+                    case .failure(let error):
+                        completion(.failure(error))
+                    }
+                }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
     }
 }
 
@@ -54,15 +219,16 @@ struct NameSelectionPage: View {
     @Binding var name: String
     @Binding var description: String
     @Binding var uiImageF: UIImage?
-
-    @State private var recipeItem: PhotosPickerItem?
-    @State private var recipeImage: Image?
+    @Binding var recipeItem: PhotosPickerItem?
+    @Binding var recipeImage: Image?
     
-    init(currentPageIndex: Binding<Int>, name: Binding<String>, description: Binding<String>, uiImageF: Binding<UIImage?>) {
+    init(currentPageIndex: Binding<Int>, name: Binding<String>, description: Binding<String>, uiImageF: Binding<UIImage?>, recipeItem: Binding<PhotosPickerItem?>, recipeImage: Binding<Image?>) {
         self._currentPageIndex = currentPageIndex
         self._name = name
         self._description = description
         self._uiImageF = uiImageF
+        self._recipeItem = recipeItem
+        self._recipeImage = recipeImage
     }
     
     var body: some View {
@@ -104,7 +270,7 @@ struct NameSelectionPage: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
                     TextEditor(text: $description)
-                        .foregroundColor(Color(hex: 0x9C9C9C))
+                        .foregroundColor(Color(hex: 0x000000))
                         .font(.custom("Ubuntu-Regular", fixedSize: 17))
                         .frame(height: 100) // Höhe nach Bedarf anpassen
                         .padding(10)
@@ -162,11 +328,21 @@ struct NameSelectionPage: View {
             }
             .onChange(of: recipeItem) { _ in
                 Task {
-                    if let data = try? await recipeItem?.loadTransferable(type: Data.self) {
-                        if let uiImage = UIImage(data: data) {
-                            recipeImage = Image(uiImage: uiImage)
-                            uiImageF = uiImage
-                            return
+                    do {
+                        if let data = try await recipeItem?.loadTransferable(type: Data.self) {
+                            if let uiImage = UIImage(data: data) {
+                                recipeImage = Image(uiImage: uiImage)
+                                uiImageF = uiImage
+                                return
+                            }
+                        }
+                    } catch {
+                        // Hier wird der Fehler abgefangen
+                        if let nsError = error as NSError? {
+                            print("Fehlercode: \(nsError.code)")
+                            print("Fehler: \(nsError.localizedDescription)")
+                        } else {
+                            print("Unbekannter Fehler: \(error.localizedDescription)")
                         }
                     }
                 }
@@ -177,6 +353,8 @@ struct NameSelectionPage: View {
                     .fill(Color.white)
                     .shadow(color: Color.gray.opacity(0.3), radius: 8, x: 0, y: 4)
             )
+            
+            Spacer()
             
             Button {
                 withAnimation {
@@ -191,9 +369,11 @@ struct NameSelectionPage: View {
             .background(Color(hex: 0x007C38))
             .cornerRadius(14)
             .shadow(radius: 4, x: 0, y: 5)
+            .padding(.bottom, 12)
             
         }
         .padding(.horizontal, 25)
+        .padding(.top, 34)
     }
 }
 
@@ -204,10 +384,9 @@ struct DetailSelectionPage: View {
     @Binding var difficulty: String
     @Binding var time: String
     @Binding var calories: String
-
-    @State private var isVeganChecked = false
-    @State private var isVegetarianChecked = false
-    @State private var cookingDuration: Int = 0
+    @Binding var isVeganChecked: Bool
+    @Binding var isVegetarianChecked: Bool
+    @Binding var cookingDuration: Int
 
     let minCalories: Double = 50
     let maxCalories: Double = 2000
@@ -216,14 +395,16 @@ struct DetailSelectionPage: View {
     let labels = ["Vegan", "Vegetarisch"]
     let difficulties = ["Leicht", "Mittel", "Schwer"]
     
-    init(currentPageIndex: Binding<Int>, category: Binding<String>, label: Binding<String>, difficulty: Binding<String>, time: Binding<String>, calories: Binding<String>) {
+    init(currentPageIndex: Binding<Int>, category: Binding<String>, label: Binding<String>, difficulty: Binding<String>, time: Binding<String>, calories: Binding<String>, isVeganChecked: Binding<Bool>, isVegetarianChecked: Binding<Bool>, cookingDuration: Binding<Int>) {
         self._currentPageIndex = currentPageIndex
         self._category = category
         self._label = label
         self._difficulty = difficulty
         self._time = time
         self._calories = calories
-
+        self._isVeganChecked = isVeganChecked
+        self._isVegetarianChecked = isVegetarianChecked
+        self._cookingDuration = cookingDuration
     }
     
     var body: some View {
@@ -298,7 +479,7 @@ struct DetailSelectionPage: View {
             )
             .onChange(of: isVeganChecked) { newValue in
                 if newValue {
-                    label = "vegan"
+                    label = "Vegan"
                     isVegetarianChecked = false
                 } else if !isVegetarianChecked {
                     label = ""
@@ -306,7 +487,7 @@ struct DetailSelectionPage: View {
             }
             .onChange(of: isVegetarianChecked) { newValue in
                 if newValue {
-                    label = "vegetarisch"
+                    label = "Vegetarisch"
                     isVeganChecked = false
                 } else if !isVeganChecked {
                     label = ""
@@ -378,7 +559,7 @@ struct DetailSelectionPage: View {
                     .shadow(color: Color.gray.opacity(0.3), radius: 8, x: 0, y: 4)
             )
         
-            
+            Spacer()
             
             Button {
                 withAnimation {
@@ -393,90 +574,125 @@ struct DetailSelectionPage: View {
             .background(Color(hex: 0x007C38))
             .cornerRadius(14)
             .shadow(radius: 4, x: 0, y: 5)
+            .padding(.bottom, 12)
         
         }
         .padding(.horizontal, 25)
+        .padding(.top, 34)
     }
 }
 
 struct instructionSelectionPage: View {
     @Binding var currentPageIndex: Int
     @Binding var ingredients: String
+    @Binding var instruction: String
+    @Binding var sendToServer: Bool
+    @Binding var objects: [Ingredient]
+    @Binding var steps: [Steps]
     
-    @State private var objects: [Ingredient] = [Ingredient()]
-    @State private var steps: [Steps] = [Steps()]
-    
-    init(currentPageIndex: Binding<Int>, ingredients: Binding<String>) {
+    init(currentPageIndex: Binding<Int>, ingredients: Binding<String>, instruction: Binding<String>, sendToServer: Binding<Bool>, objects: Binding<[Ingredient]>, steps: Binding<[Steps]>) {
         self._currentPageIndex = currentPageIndex
         self._ingredients = ingredients
+        self._instruction = instruction
+        self._sendToServer = sendToServer
+        self._objects = objects
+        self._steps = steps
     }
     
     var body: some View {
-        VStack {
+        
+        VStack (spacing: 24) {
             ScrollView {
-                VStack (alignment: .leading) {
-                    Text("Zutaten:")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .padding(.top, 12)
-                        .padding(.horizontal, 25)
-                    VStack {
-                        ForEach(objects.indices, id: \.self) { index in
-                            ObjectRow(object: $objects[index], objects: $objects)
-                                .padding(4)
-                        }
-                        Button(action: {
-                            if !objects.contains(where: { $0.ingredient.isEmpty }) {
-                                objects.append(Ingredient())
+                VStack (spacing: 24) {
+                    VStack (alignment: .leading) {
+                        Text("Zutaten:")
+                            .font(.headline)
+                            .foregroundColor(.black)
+                            .padding(.top, 12)
+                            .padding(.horizontal, 25)
+                        VStack {
+                            ForEach(objects.indices, id: \.self) { index in
+                                ObjectRow(object: $objects[index], objects: $objects)
+                                    .padding(4)
                             }
-                        }) {
-                            Text("Weitere Zutat hinzufügen")
-                                .accentColor(Color(hex: 0x007C38))
+                            Button(action: {
+                                if !objects.contains(where: { $0.ingredient.isEmpty }) {
+                                    objects.append(Ingredient())
+                                }
+                            }) {
+                                Text("Weitere Zutat hinzufügen")
+                                    .accentColor(Color(hex: 0x007C38))
+                            }
+                            .disabled(objects.contains { $0.ingredient.isEmpty })
+                            
+                            Text(formattedIngredients())
+                                .hidden()
+                                .frame(width: 0, height: 0)
                         }
-                        .disabled(objects.contains { $0.ingredient.isEmpty })
-                        
-                        Text(formattedIngredients())
+                        .padding(10)
+                        .frame(maxWidth: .infinity)
                     }
-                    .padding(10)
-                    .frame(maxWidth: .infinity)
-                }
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white)
-                        .shadow(color: Color.gray.opacity(0.3), radius: 8, x: 0, y: 4)
-                )
-                
-                VStack (alignment: .leading) {
-                    Text("Kochanleitung")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .padding(.top, 12)
-                        .padding(.horizontal, 25)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white)
+                            .shadow(color: Color.gray.opacity(0.3), radius: 8, x: 0, y: 4)
+                    )
+                    .padding(.top, 34)
                     
-                    VStack {
-                        ForEach(steps.indices, id: \.self) { index in
-                            StepRow(step: $steps[index], steps: $steps)
-                                .padding(4)
-                        }
+                    VStack (alignment: .leading) {
+                        Text("Kochanleitung")
+                            .font(.headline)
+                            .foregroundColor(.black)
+                            .padding(.top, 12)
+                            .padding(.horizontal, 25)
                         
-                        Button(action: {
-                            steps.append(Steps())
-                        }) {
-                            Text("Weiteren Schritt hinzufügen")
-                                .accentColor(Color(hex: 0x007C38))
+                        VStack {
+                            ForEach(steps.indices, id: \.self) { index in
+                                StepRow(step: $steps[index], steps: $steps)
+                                    .padding(4)
+                            }
+                            
+                            Button(action: {
+                                if !steps.contains(where: { $0.step.isEmpty }) {
+                                    steps.append(Steps())
+                                }
+                            }) {
+                                Text("Weiteren Schritt hinzufügen")
+                                    .accentColor(Color(hex: 0x007C38))
+                            }
+                            .disabled(steps.contains { $0.step.isEmpty })
+                            
                         }
+                        .padding(10)
+                        .frame(maxWidth: .infinity)
+                        
+                        Text(getStepsAsString())
+                            .hidden()
+                            .frame(width: 0, height: 0)
                     }
-                    .padding(10)
-                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white)
+                            .shadow(color: Color.gray.opacity(0.3), radius: 8, x: 0, y: 4)
+                    )
+                    .padding(.bottom, 7)
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white)
-                        .shadow(color: Color.gray.opacity(0.3), radius: 8, x: 0, y: 4)
-                )
             }
-            .padding(.horizontal, 25)
+            
+            Button {
+                sendToServer = true
+            } label: {
+                Text("Rezept erstellen")
+                    .font(.custom("Ubuntu-Bold", size: 17))
+                    .foregroundColor(Color(hex: 0xFFFFFF))
+            }
+            .frame(maxWidth: .infinity, maxHeight: 40)
+            .background(Color(hex: 0x007C38))
+            .cornerRadius(14)
+            .shadow(radius: 4, x: 0, y: 5)
+            .padding(.bottom, 12)
         }
+        .padding(.horizontal, 25)
     }
     
     struct StepRow: View {
@@ -485,8 +701,13 @@ struct instructionSelectionPage: View {
         
         var body: some View {
             VStack {
-                Text("Schritt \(steps.firstIndex(where: { $0.id == step.id })! + 1)")
-                    .font(.headline)
+                if let index = steps.firstIndex(where: { $0.id == step.id }) {
+                    Text("Schritt \(index + 1)")
+                        .font(.headline)
+                } else {
+                    Text("Schritt nicht gefunden")
+                        .font(.headline)
+                }
                 
                 TextEditor(text: $step.step)
                     .foregroundColor(Color(hex: 0x9C9C9C))
@@ -501,13 +722,13 @@ struct instructionSelectionPage: View {
             }
         }
     }
-
+    
     struct ObjectRow: View {
         @Binding var object: Ingredient
         @Binding var objects: [Ingredient]
         
-        let units = ["g", "kg", "EL", "TL", "ml", "Liter", "Prise"]
-
+        let units = ["g", "kg", "EL", "TL", "ml", "Liter", "Prise", "Bund", "Stück", "Päckchen"]
+        
         var body: some View {
             VStack {
                 HStack {
@@ -559,7 +780,13 @@ struct instructionSelectionPage: View {
             }
         }
         
+        ingredients = result
         return result
+    }
+    
+    func getStepsAsString() -> String {
+        instruction = steps.map { $0.step }.joined(separator: ";")
+        return steps.map { $0.step }.joined(separator: ";")
     }
 }
 
@@ -592,7 +819,7 @@ struct ProgressDots: View {
 
 struct NewRecipePage_Previews: PreviewProvider {
     static var previews: some View {
-        CreateRecipeView()
+        TabBarView()
     }
 }
 
