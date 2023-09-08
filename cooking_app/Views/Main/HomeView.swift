@@ -7,17 +7,22 @@
 
 import SwiftUI
 import Alamofire
+import PhotosUI
 
 struct HomeView: View {
     
     private let URL_RECIPES = "http://cookbuddy.marcelruhstorfer.de/getRecipes.php"
     private let URL_RECIPES_SEARCH = "http://cookbuddy.marcelruhstorfer.de/getRecipesSearch.php"
+    
     @State private var recipes: [Recipe] = []
     @State private var selectedBox: String? = ""
     @State private var displayedImage: Image? = nil
+    @State private var isEditingProfileImage = false
     @State private var searchText = ""
-    @State private var selectedRecipeID: Int? = 28
+    @State private var selectedRecipeID: Int? = 26
     @State private var isLoadingSelectedRecipe = false
+    
+    @State private var isOverlayPresented = false
     
     var body: some View {
         
@@ -48,23 +53,46 @@ struct HomeView: View {
                                     .fixedSize(horizontal: false, vertical: true)
                                 
                                 
-                                displayedImage?
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 70, height: 70)
-                                    .clipShape(Circle())
-                                    .padding(.horizontal, 25)
-                                
-                                if displayedImage == nil {
-                                    Image("profile")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(width: 70, height: 70)
-                                        .clipShape(Circle())
+                                ZStack {
+                                    if let displayedImage = displayedImage {
+                                        displayedImage
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 70, height: 70)
+                                            .clipShape(Circle())
+                                            .padding(.horizontal, 25)
+                                        
+                                        Button(action: {
+                                            isOverlayPresented = true
+                                        }) {
+                                            Image(systemName: "pencil.circle.fill")
+                                                .resizable()
+                                                .frame(width: 25, height: 25)
+                                                .foregroundColor(.blue)
+                                                .background(Color.white)
+                                                .clipShape(Circle())
+                                                .shadow(radius: 5)
+                                        }
                                         .padding(.horizontal, 25)
+                                        .offset(x: 25, y: -25)
+                                        .onChange(of: isOverlayPresented) { NewValue in
+                                            if !NewValue {
+                                                getImage()
+                                            }
+                                        }
+                                    } else {
+                                        Image("profile")
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 70, height: 70)
+                                            .clipShape(Circle())
+                                            .padding(.horizontal, 25)
+                                            .onTapGesture {
+                                                isEditingProfileImage.toggle()
+                                            }
+                                    }
                                 }
                             }
-                            
                         }
                         
                         SearchBar(text: $searchText)
@@ -224,10 +252,16 @@ struct HomeView: View {
                 loadSelectedRecipe()
             }
         }
+        .overlay(
+            ProfilePicturePickerOverlay(isPresented: $isOverlayPresented, displayedImage: $displayedImage)
+                .opacity(isOverlayPresented ? 1 : 0)
+                .animation(.easeInOut(duration: 0.3))
+        )
+        
     }//Ende Body
     
     func loadSelectedRecipe() {
-        let desiredRecipeID = 28
+        let desiredRecipeID = 26
         if let selectedRecipe = recipes.first(where: { $0.id == desiredRecipeID }) {
             selectedRecipeID = desiredRecipeID
         }
@@ -242,7 +276,6 @@ struct HomeView: View {
                 }
             }
         }
-        
     }
     
     func getRecipesSearch() {
@@ -398,7 +431,9 @@ struct SelectedRecipeView: View {
                     Text(recipe.description)
                         .font(.system(size: 14))
                         .foregroundColor(Color(hex: 0x767676))
-                        .lineLimit(3) // Begrenzt die Anzahl der Zeilen auf 3
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(8)
+                        .padding(.horizontal, 12)
                 }
             }
             .padding(20)
@@ -407,5 +442,148 @@ struct SelectedRecipeView: View {
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color(.white))
         )
+    }
+}
+
+struct ProfilePicturePickerOverlay: View {
+    @Binding var isPresented: Bool
+    @Binding var displayedImage: Image?
+    
+    @State private var avatarItem: PhotosPickerItem?
+    @State private var avatarImage: Image?
+    @State private var base64String: String?
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.3)
+                .edgesIgnoringSafeArea(.all)
+
+            VStack {
+                
+                VStack {
+                    Text("Profilbild auswählen")
+                        .font(.title)
+                        .padding()
+                    
+                    if let avatarImage {
+                        avatarImage
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 120, height: 120)
+                            .clipShape(Circle())
+                            .padding(.horizontal, 25)
+                            .padding(.bottom, 18)
+                    } else {
+                        displayedImage?
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 120, height: 120)
+                            .clipShape(Circle())
+                            .padding(.horizontal, 25)
+                            .padding(.bottom, 18)
+                    }
+                    
+                    VStack (spacing: 12) {
+                        PhotosPicker("Neues Profilbild auswählen", selection: $avatarItem, matching: .images)
+                            .onChange(of: avatarItem) { _ in
+                                Task {
+                                    if let data = try? await avatarItem?.loadTransferable(type: Data.self) {
+                                        if let uiImage = UIImage(data: data) {
+                                            avatarImage = Image(uiImage: uiImage)
+                                            return
+                                        }
+                                    }
+                                }
+                            }
+                            .font(.custom("Ubuntu-Bold", size: 17))
+                            .foregroundColor(Color(hex: 0xFFFFFF))
+                            .frame(maxWidth: .infinity, maxHeight: 40)
+                            .background(Color(hex: 0x007C38))
+                            .cornerRadius(14)
+                            .shadow(radius: 4, x: 0, y: 5)
+                    
+                        Button(action: {
+                            let image = avatarImage
+                            let size = CGSize(width: 100, height: 100)
+                            
+                            let uiImage = image!.getUIImage(newSize: size)
+                            let imageData = uiImage!.pngData()
+                            base64String = imageData!.base64EncodedString()
+                            
+                            UserDefaults.standard.set(base64String, forKey: "picture")
+                            
+                            addPicture()
+            
+                            isPresented = false
+                        }) {
+                            Text("Bild speichern")
+                                .font(.custom("Ubuntu-Bold", size: 17))
+                                .foregroundColor(Color(hex: 0xFFFFFF))
+                                .frame(maxWidth: .infinity, maxHeight: 40)
+                        }
+                        .background(Color(hex: 0x007C38))
+                        .cornerRadius(14)
+                        .shadow(radius: 4, x: 0, y: 5)
+
+                        Button(action: {
+                            isPresented = false
+                        }) {
+                            Text("Abbrechen")
+                                .font(.custom("Ubuntu-Bold", size: 17))
+                                .foregroundColor(Color.white)
+                                .frame(maxWidth: .infinity, maxHeight: 40)
+                        }
+                        .background(Color.red)
+                        .cornerRadius(14)
+                        .shadow(radius: 4, x: 0, y: 5)
+                    }
+                    .padding(.bottom, 24)
+                    
+                }
+                .padding(.horizontal, 25)
+                .background(Color.white)
+                .cornerRadius(20)
+            }
+            .padding(.horizontal, 25)
+        }
+        .onTapGesture {
+            isPresented = false
+        }
+    }
+    
+    private func addPicture() {
+        
+        let URL_ADD_PICTURE = "http://cookbuddy.marcelruhstorfer.de/addPicture.php"
+        
+        let _parameters: Parameters=[
+            "id":UserDefaults.standard.string(forKey: "id")!,
+            "picture": base64String!
+        ]
+        
+        Alamofire.request(URL_ADD_PICTURE, method: .post, parameters: _parameters).responseJSON{
+            response in
+            print(response)
+            
+            if let result = response.result.value {
+                let jsonData = result as! NSDictionary
+                
+                if ((jsonData.value(forKey: "message") as! String) == "Profile Picture added successfully")
+                {
+                    avatarImage = nil
+                    avatarItem = nil
+                }
+            }
+        }
+    }
+}
+
+extension Image {
+    @MainActor
+    func getUIImage(newSize: CGSize) -> UIImage? {
+        let image = resizable()
+            .scaledToFill()
+            .frame(width: newSize.width, height: newSize.height)
+            .clipped()
+        return ImageRenderer(content: image).uiImage
     }
 }

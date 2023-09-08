@@ -13,6 +13,9 @@ struct TabBarView: View {
     
     init() {
         UITabBar.appearance().backgroundColor = UIColor(Color(hex: 0xF2F2F7))
+        UITabBar.appearance().isTranslucent = true
+        UITabBar.appearance().shadowImage = UIImage()
+        UITabBar.appearance().backgroundImage = UIImage()
     }
     
     var body: some View {

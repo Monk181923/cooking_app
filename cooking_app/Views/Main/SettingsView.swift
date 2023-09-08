@@ -16,6 +16,13 @@ struct SettingsView: View {
     @State private var avatarImage: Image?
     @State private var base64String: String?
     
+    @State private var isChangingEmail = false
+    @State private var isChangingUsername = false
+    @State private var isChangingPassword = false
+    @State private var email = ""
+    @State private var username = ""
+       
+    
     @Environment(\.presentationMode) var presentationMode
     
     var URL_ADD_PICTURE = "http://cookbuddy.marcelruhstorfer.de/addPicture.php"
@@ -23,93 +30,52 @@ struct SettingsView: View {
     var body: some View {
         
         NavigationView {
+            List {
+                Section(header: Text("Benutzerdaten")) {
+                    EditableText(title: "Benutzername", text: $username, isEditing: $isChangingUsername)
+                    EditableText(title: "E-Mail", text: $email, isEditing: $isChangingEmail)
+                    Button(action: {
+                        UserDefaults.standard.set("", forKey: "user_name")
+                        UserDefaults.standard.set("", forKey: "user_email")
+                        UserDefaults.standard.set("", forKey: "password")
+                        UserDefaults.standard.set(nil, forKey: "picture")
+                        UserDefaults.standard.set(nil, forKey: "likedRecipes")
+                        UserDefaults.standard.synchronize()
+                        logout = true
+                    }) {
+                        Text("Logout")
+                            .foregroundColor(.red)
+                    }
+                    .background(
+                        NavigationLink("", destination: LoginView(), isActive: $logout)
+                            .opacity(0)
+                    )
+                }
+                
+                Section(header: Text("Passwort")) {
+                    Button(action: {
+                        isChangingPassword.toggle()
+                    }) {
+                        Text("Passwort ändern")
+                    }
+                }
+                
+                Section(header: Text("App-Infos")) {
+                    HStack {
+                        Text("App-Version:")
+                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                }
             
-            VStack (spacing: 20) {
                 
-                Button {
-                    UserDefaults.standard.set("", forKey: "user_name")
-                    UserDefaults.standard.set("", forKey: "user_email")
-                    UserDefaults.standard.set("", forKey: "password")
-                    UserDefaults.standard.set(nil, forKey: "picture")
-                    UserDefaults.standard.set(nil, forKey: "likedRecipes")
-                    UserDefaults.standard.synchronize()
-                    logout = true
-                    
-                } label: {
-                    Text("Logout")
-                        .font(.custom("Ubuntu-Bold", size: 17))
-                    
-                    NavigationLink(destination: StartView(), isActive: $logout) {
-                        EmptyView()
-                    }
-                }
-                
-                VStack {
-                    
-                    PhotosPicker("Select avatar", selection: $avatarItem, matching: .images)
-                    
-                    if let avatarImage {
-                        avatarImage
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 200, height: 200)
-                            .clipShape(Circle())
-                            .padding(.horizontal, 25)
-                    }
-                }
-                .onChange(of: avatarItem) { _ in
-                    Task {
-                        if let data = try? await avatarItem?.loadTransferable(type: Data.self) {
-                            if let uiImage = UIImage(data: data) {
-                                avatarImage = Image(uiImage: uiImage)
-                                return
-                            }
-                        }
-                    }
-                }
-                
-                Button {
-                    
-                    let image = avatarImage
-                    let size = CGSize(width: 100, height: 100)
-                    
-                    let uiImage = image!.getUIImage(newSize: size)
-                    let imageData = uiImage!.pngData()
-                    base64String = imageData!.base64EncodedString()
-                    
-                    UserDefaults.standard.set(base64String, forKey: "picture")
-                    
-                    addPicture()
-                } label: {
-                    Text("Upload")
-                }
-                
-            }//Ende VStack
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(hex: 0xF2F2F7))
-        }//Ende NavView
-    }
-    
-    private func addPicture() {
-        
-        let _parameters: Parameters=[
-            "id":UserDefaults.standard.string(forKey: "id")!,
-            "picture": base64String!
-        ]
-        
-        Alamofire.request(URL_ADD_PICTURE, method: .post, parameters: _parameters).responseJSON{
-            response in
-            print(response)
-            
-            if let result = response.result.value {
-                let jsonData = result as! NSDictionary
-                
-                if ((jsonData.value(forKey: "message") as! String) == "Profile Picture added successfully")
-                {
-                    avatarImage = nil
-                    avatarItem = nil
-                }
             }
+            .listStyle(GroupedListStyle())
+            .navigationBarTitle("Einstellungen")
+        }
+        .onAppear {
+            self.username = UserDefaults.standard.string(forKey: "user_name") ?? "Unbekannter Benutzer"
+            self.email = UserDefaults.standard.string(forKey: "user_email") ?? "Unbekannte Mail"
         }
     }
 }
@@ -120,13 +86,27 @@ struct SettingsView_Previews: PreviewProvider {
     }
 }
 
-extension Image {
-    @MainActor
-    func getUIImage(newSize: CGSize) -> UIImage? {
-        let image = resizable()
-            .scaledToFill()
-            .frame(width: newSize.width, height: newSize.height)
-            .clipped()
-        return ImageRenderer(content: image).uiImage
+struct EditableText: View {
+    var title: String
+    @Binding var text: String
+    @Binding var isEditing: Bool
+
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            if isEditing {
+                TextField(title, text: $text)
+                    .multilineTextAlignment(.trailing)
+            } else {
+                Text(text)
+            }
+            Button(action: {
+                isEditing.toggle()
+            }) {
+                Image(systemName: isEditing ? "checkmark.circle" : "pencil.circle")
+                    .foregroundColor(.blue)
+            }
+        }
     }
 }
